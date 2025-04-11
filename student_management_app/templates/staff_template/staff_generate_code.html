@@ -1,0 +1,25 @@
+{% extends "base_template.html" %}
+
+{% block page_title %}Generate Attendance Code{% endblock page_title %}
+
+{% block main_content %}
+<div class="container">
+    <h3>Generate Attendance Code</h3>
+
+    <div class="form-group">
+        <label for="subject">Select Subject:</label>
+        <select id="subject" class="form-control">
+            {% for subject in subjects %}
+            <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="expiry_time">Expiry Time (minutes):</label>
+        <input type="number" id="expiry_time" class="form-control" value="5" min="1">
+    </div>
+
+    <button id="generate_code_btn" class="btn btn-primary">Generate Code</button>
+</div>
+{% endblock %}

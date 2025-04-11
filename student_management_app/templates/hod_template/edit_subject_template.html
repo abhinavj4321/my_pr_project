@@ -1,0 +1,182 @@
+{% extends 'hod_template/base_template.html' %}
+
+{% block page_title %}
+    Edit Subject | #ID : {{ subject.id }}
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<style>
+    /* High-tech card styling */
+    .custom-card {
+        background-color: #1a1a1a;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #333;
+        color: #f0f0f0;
+    }
+
+    .custom-header {
+        background-color: #333;
+        color: #00ff00;  /* Neon green */
+        border-bottom: 2px solid #00ff00;
+        padding: 10px 15px;
+        font-family: 'Roboto', sans-serif;
+        font-weight: bold;
+    }
+
+    .custom-header h3 {
+        font-size: 1.5rem;
+        text-transform: uppercase;
+    }
+
+    .card-title {
+        font-size: 18px;
+        color: #00ff00;
+    }
+
+    /* Form styling */
+    .custom-form {
+        background-color: #2b2b2b;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .custom-form input, .custom-form select, .custom-form textarea {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #555;
+        border-radius: 4px;
+        padding: 10px;
+        font-size: 1rem;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .custom-form button {
+        background-color: #00ff00;
+        color: #1a1a1a;
+        font-size: 1.1rem;
+        font-weight: bold;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .custom-form button:hover {
+        background-color: #00cc00;
+    }
+
+    .custom-form .form-group {
+        margin-bottom: 20px;
+    }
+
+    .alert {
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 1rem;
+        position: relative;
+    }
+
+    .alert button.close {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        font-size: 1.2rem;
+        color: #fff;
+    }
+
+    .alert-success {
+        background-color: #00cc00;
+        color: #fff;
+    }
+
+    .alert-danger {
+        background-color: #ff4d4d;
+        color: #fff;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card custom-card">
+                    <div class="card-header custom-header">
+                        <h3 class="card-title">Edit Subject</h3>
+                    </div>
+                    <form role="form" method="POST" action="{% url 'edit_subject_save' %}" class="custom-form">
+                        {% csrf_token %}
+
+                        {% if messages %}
+                        <div class="form-group">
+                            <div class="col-12">
+                                {% for message in messages %}
+                                    {% if message.tags == "error" %}
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    {% elif message.tags == "success" %}
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="subject">Subject Name</label>
+                                <input type="text" class="form-control" id="subject" name="subject" value="{{ subject.subject_name }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="course">Course</label>
+                                <select class="form-control" id="course" name="course">
+                                    {% for course in courses %}
+                                    <option value="{{ course.id }}" {% if course.id == subject.course_id.id %} selected {% endif %}>{{ course.course_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="staff">Staff</label>
+                                <select class="form-control" id="staff" name="staff">
+                                    {% for staff in staffs %}
+                                    <option value="{{ staff.id }}" {% if staff.id == subject.staff_id.id %} selected {% endif %}>{{ staff.first_name }} {{ staff.last_name }}</option>
+                                    {% endfor %}
+                                </select>
+
+                                <input type="hidden" name="subject_id" value="{{ subject.id }}" />
+                            </div>
+
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Update Subject</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}

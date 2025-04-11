@@ -1,0 +1,139 @@
+{% extends 'staff_template/base_template.html' %}
+
+{% block page_title %}
+    Apply for Leave
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Apply for Leave</h3>
+                    </div>
+
+                    {% if messages %}
+                    <div class="form-group">
+                        <div class="col-12">
+                            {% for message in messages %}
+                                {% if message.tags == "error" %}
+                                    <div class="alert alert-danger">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                {% elif message.tags == "success" %}
+                                    <div class="alert alert-success">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" action="#">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Leave Type</label>
+                                <select class="form-control" name="leave_type" required>
+                                    <option value="">Select Leave Type</option>
+                                    <option value="Medical">Medical Leave</option>
+                                    <option value="Personal">Personal Leave</option>
+                                    <option value="Casual">Casual Leave</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <input type="date" class="form-control" name="leave_start_date" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>End Date</label>
+                                <input type="date" class="form-control" name="leave_end_date" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Reason for Leave</label>
+                                <textarea class="form-control" name="leave_reason" rows="5" required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Submit Leave Application</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Leave History</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Date Applied</th>
+                                    <th>Leave Type</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- This is a placeholder for leave history data -->
+                                <tr>
+                                    <td colspan="5" class="text-center">No leave applications found.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function() {
+        // Client-side validation
+        $('form').submit(function(e) {
+            var startDate = new Date($('input[name="leave_start_date"]').val());
+            var endDate = new Date($('input[name="leave_end_date"]').val());
+            
+            if (startDate > endDate) {
+                e.preventDefault();
+                alert("End date cannot be before start date!");
+                return false;
+            }
+            
+            if (startDate < new Date()) {
+                e.preventDefault();
+                alert("Start date cannot be in the past!");
+                return false;
+            }
+            
+            return true;
+        });
+    });
+</script>
+{% endblock custom_js %}

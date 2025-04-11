@@ -1,0 +1,643 @@
+{% extends 'student_template/base_template.html' %} {% block page_title %} Scan
+QR Code {% endblock page_title %} {% block custom_css %}
+<link rel="stylesheet" href="{% static 'dist/css/qrscanner.css' %}" />
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+/>
+{% endblock custom_css %} {% block main_content %} {% load static %}
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-qrcode mr-2"></i>Scan QR Code for Attendance
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              <p>
+                <i class="fas fa-info-circle mr-2"></i>Please allow camera
+                access when prompted. Position the QR code within the scanning
+                area.
+              </p>
+            </div>
+
+            <div
+              id="browser-warning"
+              class="alert alert-warning"
+              style="display: none"
+            >
+              <p>
+                <strong
+                  ><i class="fas fa-exclamation-triangle mr-2"></i>Camera
+                  Support:</strong
+                >
+                Your browser may have limited support for camera access. For
+                best results, use the latest version of Chrome, Firefox, or
+                Edge.
+              </p>
+            </div>
+
+            <div
+              id="error-message"
+              class="alert alert-danger"
+              style="display: none"
+            ></div>
+            <div
+              id="success-message"
+              class="alert alert-success"
+              style="display: none"
+            ></div>
+
+            <div class="scanner-container">
+              <video id="preview" style="display: none"></video>
+              <div id="scanner-overlay" style="display: none"></div>
+              <div id="camera-placeholder">
+                <div class="text-center">
+                  <i class="fas fa-camera fa-4x mb-3 text-muted"></i>
+                  <p>Camera preview will appear here</p>
+                  <p class="text-muted">
+                    <small>Click "Start Camera" to begin scanning</small>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group text-center">
+              <button
+                id="start-button"
+                class="btn scanner-btn scanner-btn-primary"
+              >
+                <i class="fas fa-play mr-2"></i>Start Camera
+              </button>
+              <button
+                id="stop-button"
+                class="btn scanner-btn scanner-btn-danger"
+                style="display: none"
+              >
+                <i class="fas fa-stop mr-2"></i>Stop Camera
+              </button>
+            </div>
+
+            <!-- Camera troubleshooting section -->
+            <div class="troubleshooting-card mt-4">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-tools mr-2"></i>Camera Troubleshooting
+                </h3>
+                <div class="card-tools">
+                  <button
+                    type="button"
+                    class="btn btn-tool"
+                    data-card-widget="collapse"
+                  >
+                    <i class="fas fa-minus"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <p>If you're having trouble with the camera:</p>
+                <ol>
+                  <li>
+                    Make sure you've granted camera permissions when prompted
+                  </li>
+                  <li>
+                    Check that no other applications are using your camera
+                  </li>
+                  <li>Try reloading the page</li>
+                  <li>On mobile devices, try using the Chrome browser</li>
+                  <li>
+                    If using a laptop, make sure your webcam is not disabled
+                  </li>
+                </ol>
+                <button id="check-permissions" class="btn btn-info btn-sm">
+                  <i class="fas fa-check-circle mr-2"></i>Check Camera
+                  Permissions
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="location-card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-map-marker-alt mr-2"></i>Location Status
+            </h3>
+          </div>
+          <div class="card-body">
+            <div id="location-status" class="alert alert-warning">
+              <i class="fas fa-spinner fa-spin mr-2"></i>Waiting for location...
+            </div>
+            <div id="location-details" style="display: none">
+              <p>
+                <strong>Your coordinates:</strong>
+                <span id="student-coordinates"></span>
+              </p>
+              <div class="text-muted">
+                <small
+                  ><i class="fas fa-info-circle mr-1"></i>You must be within the
+                  allowed radius of your teacher to mark attendance</small
+                >
+              </div>
+            </div>
+            <div id="map" style="height: 250px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock main_content %} {% block custom_js %}
+<!-- Include Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<!-- Include jsQR for QR code scanning -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+<script>
+  $(document).ready(function () {
+    // Global variables
+    let video = document.getElementById("preview");
+    let canvasElement;
+    let canvas;
+    let scanning = false;
+    let locationData = {
+      latitude: null,
+      longitude: null,
+      accuracy: null,
+    };
+    let map = null;
+    let studentMarker = null;
+
+    // Check browser compatibility
+    function checkBrowserCompatibility() {
+      const isChrome =
+        /Chrome/.test(navigator.userAgent) &&
+        /Google Inc/.test(navigator.vendor);
+      const isFirefox = /Firefox/.test(navigator.userAgent);
+      const isEdge = /Edg/.test(navigator.userAgent);
+      const isSafari =
+        /Safari/.test(navigator.userAgent) &&
+        !/Chrome/.test(navigator.userAgent);
+      const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+      // Display warning for non-optimal browsers
+      if (!isChrome && !isFirefox && !isEdge) {
+        $("#browser-warning").show();
+      }
+
+      // Specific message for iOS Safari which has limited camera support
+      if (isIOS && isSafari) {
+        $("#browser-warning")
+          .html(
+            '<p><strong><i class="fas fa-exclamation-triangle mr-2"></i>iOS Safari detected:</strong> Camera access may be limited. For best results, use Chrome on iOS.</p>'
+          )
+          .show();
+      }
+
+      return navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+    }
+
+    // Initialize map
+    function initMap() {
+      map = L.map("map").setView([0, 0], 2);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+    }
+
+    // Get user's location
+    function getLocation() {
+      if (navigator.geolocation) {
+        $("#location-status").html(
+          '<i class="fas fa-spinner fa-spin mr-2"></i>Getting your location...'
+        );
+
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            locationData.latitude = position.coords.latitude;
+            locationData.longitude = position.coords.longitude;
+            locationData.accuracy = position.coords.accuracy; // Capture accuracy in meters
+
+            $("#location-status").html(
+              '<span class="text-success"><i class="fas fa-check-circle mr-2"></i>Location acquired successfully!</span>'
+            );
+            $("#student-coordinates").text(
+              locationData.latitude.toFixed(6) +
+                ", " +
+                locationData.longitude.toFixed(6) +
+                " (±" +
+                Math.round(locationData.accuracy) +
+                "m accuracy)"
+            );
+            $("#location-details").show();
+
+            // Update map
+            if (map) {
+              map.setView([locationData.latitude, locationData.longitude], 15);
+              if (studentMarker) {
+                studentMarker.setLatLng([
+                  locationData.latitude,
+                  locationData.longitude,
+                ]);
+              } else {
+                studentMarker = L.marker([
+                  locationData.latitude,
+                  locationData.longitude,
+                ])
+                  .addTo(map)
+                  .bindPopup("Your location")
+                  .openPopup();
+              }
+            }
+          },
+          function (error) {
+            let errorMessage =
+              '<i class="fas fa-exclamation-triangle mr-2"></i>Error getting location: ';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage += "User denied the request for Geolocation.";
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage += "Location information is unavailable.";
+                break;
+              case error.TIMEOUT:
+                errorMessage += "The request to get user location timed out.";
+                break;
+              case error.UNKNOWN_ERROR:
+                errorMessage += "An unknown error occurred.";
+                break;
+            }
+            $("#location-status").html(
+              '<span class="text-danger">' + errorMessage + "</span>"
+            );
+          }
+        );
+      } else {
+        $("#location-status").html(
+          '<span class="text-danger"><i class="fas fa-exclamation-triangle mr-2"></i>Geolocation is not supported by this browser.</span>'
+        );
+      }
+    }
+
+    // Start camera
+    function startCamera() {
+      // Hide placeholder when starting camera
+      $("#camera-placeholder").hide();
+      $("#preview").show();
+
+      // Create canvas for QR processing if it doesn't exist
+      if (!canvasElement) {
+        canvasElement = document.createElement("canvas");
+        canvas = canvasElement.getContext("2d");
+      }
+
+      // Clear any previous error messages
+      $("#error-message").hide();
+      $("#success-message")
+        .html('<i class="fas fa-spinner fa-spin mr-2"></i>Accessing camera...')
+        .show();
+
+      // Check if mediaDevices API is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        $("#error-message")
+          .html(
+            '<i class="fas fa-exclamation-circle mr-2"></i>Camera access is not supported in this browser. Try using Chrome, Firefox, or Edge.'
+          )
+          .show();
+        $("#success-message").hide();
+        $("#camera-placeholder").show();
+        $("#preview").hide();
+        return;
+      }
+
+      // Try multiple camera options in case the environment facing camera isn't available
+      const cameraOptions = [
+        { video: { facingMode: "environment" } }, // Try back camera first (for mobile)
+        { video: true }, // Then try any camera
+        { video: { facingMode: "user" } }, // Finally try front camera
+      ];
+
+      // Function to try next camera option
+      function tryNextCamera(index) {
+        if (index >= cameraOptions.length) {
+          $("#error-message")
+            .html(
+              '<i class="fas fa-exclamation-circle mr-2"></i>Could not start video source. Please check camera permissions and try again.'
+            )
+            .show();
+          $("#success-message").hide();
+          // Show placeholder when camera fails
+          $("#camera-placeholder").show();
+          $("#preview").hide();
+          return;
+        }
+
+        navigator.mediaDevices
+          .getUserMedia(cameraOptions[index])
+          .then(function (stream) {
+            video.srcObject = stream;
+            video.setAttribute("playsinline", true); // Required for iOS
+            video.play();
+            $("#start-button").hide();
+            $("#stop-button").show();
+            $("#scanner-overlay").show();
+            $("#success-message").hide();
+            scanning = true;
+            requestAnimationFrame(tick);
+          })
+          .catch(function (error) {
+            console.error("Camera error with option " + index + ":", error);
+            // Try next camera option
+            tryNextCamera(index + 1);
+          });
+      }
+
+      // Start trying camera options
+      tryNextCamera(0);
+    }
+
+    // Check camera permissions
+    function checkCameraPermissions() {
+      // First check if API is available
+      if (!navigator.permissions) {
+        $("#error-message")
+          .html(
+            '<i class="fas fa-exclamation-circle mr-2"></i>Permission API not supported in this browser. Try manually checking camera permissions in your browser settings.'
+          )
+          .show();
+        return;
+      }
+
+      $("#success-message")
+        .html(
+          '<i class="fas fa-spinner fa-spin mr-2"></i>Checking camera permissions...'
+        )
+        .show();
+      $("#error-message").hide();
+
+      navigator.permissions
+        .query({ name: "camera" })
+        .then(function (permissionStatus) {
+          $("#success-message").hide();
+
+          if (permissionStatus.state === "granted") {
+            $("#success-message")
+              .html(
+                '<i class="fas fa-check-circle mr-2"></i>Camera permission is granted. You can use the camera.'
+              )
+              .show();
+          } else if (permissionStatus.state === "prompt") {
+            $("#error-message")
+              .html(
+                '<i class="fas fa-info-circle mr-2"></i>Camera permission is not decided yet. You will be prompted when you start the camera.'
+              )
+              .show();
+          } else if (permissionStatus.state === "denied") {
+            $("#error-message")
+              .html(
+                '<i class="fas fa-ban mr-2"></i>Camera permission is denied. Please reset permissions in your browser settings.<br>In Chrome: Settings > Privacy and Security > Site Settings > Camera'
+              )
+              .show();
+          }
+
+          // Listen for permission changes
+          permissionStatus.onchange = function () {
+            if (permissionStatus.state === "granted") {
+              $("#error-message").hide();
+              $("#success-message")
+                .html(
+                  '<i class="fas fa-check-circle mr-2"></i>Camera permission granted!'
+                )
+                .show();
+            }
+          };
+        })
+        .catch(function (error) {
+          $("#success-message").hide();
+          $("#error-message")
+            .html(
+              '<i class="fas fa-exclamation-circle mr-2"></i>Error checking camera permissions: ' +
+                error.message
+            )
+            .show();
+        });
+    }
+
+    // Handle video play event to confirm camera is actually working
+    video.addEventListener("play", function () {
+      console.log("Video stream started successfully");
+      $("#camera-placeholder").hide();
+    });
+
+    // Handle video error event
+    video.addEventListener("error", function (e) {
+      console.error("Video error:", e);
+      $("#error-message")
+        .html(
+          '<i class="fas fa-exclamation-circle mr-2"></i>Video error: ' +
+            (e.message || "Unknown error")
+        )
+        .show();
+      $("#camera-placeholder").show();
+      $("#preview").hide();
+    });
+
+    // Stop camera
+    function stopCamera() {
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach((track) => track.stop());
+        video.srcObject = null;
+      }
+      $("#start-button").show();
+      $("#stop-button").hide();
+      $("#scanner-overlay").hide();
+      $("#camera-placeholder").show();
+      $("#preview").hide();
+      scanning = false;
+    }
+
+    // Process video frames to detect QR codes
+    function tick() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
+        canvasElement.height = video.videoHeight;
+        canvasElement.width = video.videoWidth;
+        canvas.drawImage(
+          video,
+          0,
+          0,
+          canvasElement.width,
+          canvasElement.height
+        );
+        var imageData = canvas.getImageData(
+          0,
+          0,
+          canvasElement.width,
+          canvasElement.height
+        );
+
+        var code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
+
+        if (code) {
+          // QR code detected
+          scanning = false;
+          processQRCode(code.data);
+        }
+      }
+
+      if (scanning) {
+        requestAnimationFrame(tick);
+      }
+    }
+
+    // Process the QR code data
+    function processQRCode(qrData) {
+      // Check if location is available
+      if (!locationData.latitude || !locationData.longitude) {
+        $("#error-message")
+          .html(
+            '<i class="fas fa-exclamation-circle mr-2"></i>Location data is required. Please enable location services and try again.'
+          )
+          .show();
+        scanning = true;
+        requestAnimationFrame(tick);
+        return;
+      }
+
+      // Show processing message
+      $("#error-message").hide();
+      $("#success-message")
+        .html(
+          '<i class="fas fa-spinner fa-spin mr-2"></i>Processing QR code...'
+        )
+        .show();
+
+      // Prepare data to send to server
+      const data = {
+        token: qrData,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        accuracy: locationData.accuracy, // Include accuracy information
+      };
+
+      // Send data to server
+      $.ajax({
+        url: '{% url "student_process_qr_scan" %}',
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: function (response) {
+          let successMessage =
+            '<i class="fas fa-check-circle mr-2"></i>' +
+            response.message +
+            " for " +
+            response.subject;
+
+          // Add location verification details if available
+          if (response.location_verified !== undefined) {
+            let verificationStatus = response.location_verified
+              ? '<span class="badge badge-success">Verified</span>'
+              : '<span class="badge badge-warning">Not Verified</span>';
+
+            successMessage +=
+              '<div class="mt-2">Location: ' + verificationStatus + "</div>";
+
+            // If there are detailed location metrics, show them
+            if (response.location_details) {
+              const details = response.location_details;
+              let detailsHtml =
+                '<div class="mt-2 p-2 bg-light border rounded">';
+              detailsHtml += "<h6>Location Details:</h6>";
+              detailsHtml += '<ul class="mb-0">';
+              detailsHtml += `<li>Distance: ${details.distance} meters</li>`;
+              detailsHtml += `<li>Allowed radius: ${details.allowed_radius} meters</li>`;
+              detailsHtml += `<li>Accuracy: ±${details.error_margin} meters</li>`;
+              detailsHtml += "</ul></div>";
+
+              successMessage += detailsHtml;
+            }
+          }
+
+          $("#success-message").html(successMessage).show();
+          $("#error-message").hide();
+
+          // Stop scanning after successful attendance
+          stopCamera();
+
+          // Redirect to home page after 3 seconds
+          setTimeout(function () {
+            window.location.href = '{% url "student_home" %}';
+          }, 3000);
+        },
+        error: function (xhr) {
+          let errorMessage =
+            '<i class="fas fa-exclamation-circle mr-2"></i>Error processing QR code';
+          try {
+            const response = JSON.parse(xhr.responseText);
+            errorMessage =
+              '<i class="fas fa-exclamation-circle mr-2"></i>' +
+              (response.message || errorMessage);
+
+            // If there are location details, display them
+            if (response.location_details) {
+              const details = response.location_details;
+              let detailsHtml =
+                '<div class="mt-2 p-2 bg-light border rounded">';
+              detailsHtml += "<h6>Location Details:</h6>";
+              detailsHtml += '<ul class="mb-0">';
+              detailsHtml += `<li>Distance: ${details.distance} meters</li>`;
+              detailsHtml += `<li>Allowed radius: ${details.allowed_radius} meters</li>`;
+              detailsHtml += `<li>Accuracy: ±${details.error_margin} meters</li>`;
+              detailsHtml += "</ul></div>";
+
+              errorMessage += detailsHtml;
+            }
+          } catch (e) {
+            console.error("Error parsing error response:", e);
+          }
+
+          $("#error-message").html(errorMessage).show();
+          $("#success-message").hide();
+
+          // Resume scanning after error
+          scanning = true;
+          requestAnimationFrame(tick);
+        },
+      });
+    }
+
+    // Event listeners
+    $("#start-button").click(function () {
+      startCamera();
+    });
+
+    $("#stop-button").click(function () {
+      stopCamera();
+    });
+
+    $("#check-permissions").click(function () {
+      checkCameraPermissions();
+    });
+
+    // Initialize
+    checkBrowserCompatibility();
+    initMap();
+    getLocation();
+
+    // Refresh location periodically
+    setInterval(getLocation, 30000); // Every 30 seconds
+  });
+</script>
+{% endblock custom_js %}

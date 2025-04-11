@@ -1,0 +1,48 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+*.log
+*.pot
+local_settings.py
+media/temp/
+
+# Large files
+media/*.exe
+media/*.msi
+media/*.zip
+media/*.rar
+media/*.7z
+media/*.tar.gz
+*.exe
+*.msi
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# Database
+# Uncomment if you want to include the database in your repository
+# db.sqlite3
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db

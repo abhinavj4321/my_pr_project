@@ -1,0 +1,208 @@
+{% extends 'student_template/base_template.html' %}
+
+{% block page_title %}
+    Student Home
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{ total_attendance }}</h3>
+                        <p>Total Attendance</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <a href="{% url 'student_view_attendance' %}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>{{ attendance_absent }}</h3>
+                        <p>Absent</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                    <a href="{% url 'student_view_attendance' %}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ attendance_present }}</h3>
+                        <p>Present</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <a href="{% url 'student_view_attendance' %}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-primary">
+                    <div class="inner">
+                        <h3>{{ total_subjects }}</h3>
+                        <p>Total Subjects</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie mr-2"></i>
+                            Attendance Overview
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="pieChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-bar mr-2"></i>
+                            Subject-wise Attendance
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="barChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-warning">
+                        <h3 class="card-title">
+                            <i class="fas fa-qrcode mr-2"></i>
+                            Quick Actions
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <a href="{% url 'student_scan_qr' %}" class="btn btn-lg btn-success btn-block">
+                                    <i class="fas fa-qrcode mr-2"></i> Scan QR Code
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{% url 'student_view_attendance' %}" class="btn btn-lg btn-info btn-block">
+                                    <i class="fas fa-calendar-alt mr-2"></i> View Attendance
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{% url 'student_profile' %}" class="btn btn-lg btn-primary btn-block">
+                                    <i class="fas fa-user-circle mr-2"></i> My Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function(){
+        var pieData = {
+            labels: [
+                'ABSENT', 
+                'PRESENT', 
+            ],
+            datasets: [
+                {
+                    data: [{{ attendance_absent }}, {{ attendance_present }}],
+                    backgroundColor : ['#f56954', '#00a65a'],
+                }
+            ]
+        }
+        var pieChartCanvas = $('#pieChart').get(0).getContext('2d')
+        var pieData = pieData;
+        var pieOptions = {
+            maintainAspectRatio : false,
+            responsive : true,
+        }
+        
+        var pieChart = new Chart(pieChartCanvas, {
+            type: 'pie',
+            data: pieData,
+            options: pieOptions      
+        })
+
+        var subjects = {{ subject_name|safe }}
+        var data_present = {{ data_present }}
+        var data_absent = {{ data_absent }}
+
+        var areaChartData = {
+            labels  : subjects,
+            datasets: [
+                {
+                    label               : 'Present in Class',
+                    backgroundColor     : 'rgba(60,141,188,0.9)',
+                    borderColor         : 'rgba(60,141,188,0.8)',
+                    pointRadius          : false,
+                    pointColor          : '#3b8bba',
+                    pointStrokeColor    : 'rgba(60,141,188,1)',
+                    pointHighlightFill  : '#fff',
+                    pointHighlightStroke: 'rgba(60,141,188,1)',
+                    data                : data_present
+                },
+                {
+                    label               : 'Absent in Class',
+                    backgroundColor     : 'rgba(210, 214, 222, 1)',
+                    borderColor         : 'rgba(210, 214, 222, 1)',
+                    pointRadius         : false,
+                    pointColor          : 'rgba(210, 214, 222, 1)',
+                    pointStrokeColor    : '#c1c7d1',
+                    pointHighlightFill  : '#fff',
+                    pointHighlightStroke: 'rgba(220,220,220,1)',
+                    data                : data_absent
+                },
+            ]
+        }
+
+
+        var barChartCanvas = $('#barChart').get(0).getContext('2d')
+        var barChartData = jQuery.extend(true, {}, areaChartData)
+        var temp1 = areaChartData.datasets[0]
+        barChartData.datasets[0] = temp1
+
+        var barChartOptions = {
+            responsive              : true,
+            maintainAspectRatio     : false,
+            datasetFill             : false
+        }
+
+        var barChart = new Chart(barChartCanvas, {
+            type: 'bar', 
+            data: barChartData,
+            options: barChartOptions
+        })
+    })
+</script>
+{% endblock custom_js %}

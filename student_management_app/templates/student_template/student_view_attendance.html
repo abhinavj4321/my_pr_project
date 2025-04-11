@@ -1,0 +1,169 @@
+{% extends 'student_template/base_template.html' %}
+
+{% block page_title %}
+    View Attendance Data
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="custom-card">
+                    <div class="card-header">
+                        <h3 class="card-title">View Attendance</h3>
+                    </div>
+
+                    {% if messages %}
+                    <div class="form-group">
+                        <div class="col-12">
+                            {% for message in messages %}
+                            {% if message.tags == "error" %}
+                            <div class="alert alert-danger">
+                                {{ message }}
+                            </div>
+                            {% elif message.tags == "success" %}
+                            <div class="alert alert-success">
+                                {{ message }}
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'student_view_attendance_post' %}">
+                        {% csrf_token %}
+
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Subject </label>
+                                <select class="form-control" name="subject" id="subject">
+                                    {% for subject in subjects %}
+                                    <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Start Date </label>
+                                        <input type="date" class="form-control" name="start_date" />
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>End Date </label>
+                                        <input type="date" class="form-control" name="end_date" />
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn custom-btn" id="fetch_student">Fetch Attendance</button>
+                        </div>
+
+                        <div class="card-footer" id="student_data">
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+{% block custom_css %}
+<style>
+    /* Custom card style */
+    .custom-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+        padding: 20px;
+    }
+
+    /* Form control styling */
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+    }
+
+    /* Textarea styling */
+    textarea.form-control {
+        resize: vertical;
+    }
+
+    /* Button styling */
+    .custom-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .custom-btn:hover {
+        background-color: #0056b3;
+    }
+
+    /* Alert styling */
+    .alert {
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    /* Row styling */
+    .row {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .col-lg-6 {
+        width: 48%;
+    }
+
+</style>
+{% endblock custom_css %}
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<!-- You can add custom JavaScript here if needed -->
+{% endblock custom_js %}

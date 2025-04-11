@@ -1,0 +1,109 @@
+{% extends 'student_template/base_template.html' %}
+
+{% block page_title %}
+    Result
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="custom-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Result</h3>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>#ID</th>
+                                        <th>Subject</th>
+                                        <th>Assignments Marks</th>
+                                        <th>Exam Marks</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+
+                                {% for row in student_result %}
+                                <tr>
+                                    <td>{{ row.id }}</td>
+                                    <td>{{ row.subject_id.subject_name }}</td>
+                                    <td>{{ row.subject_assignment_marks }}</td>
+                                    <td>{{ row.subject_exam_marks }}</td>
+                                    <td>
+                                        {% if row.subject_exam_marks >= 40 %}
+                                            <span class="status-pass">Pass</span>
+                                        {% else %}
+                                            <span class="status-fail">Fail</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% block custom_css %}
+<style>
+    /* Custom card style */
+    .custom-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+        padding: 20px;
+    }
+
+    /* Table styling */
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .custom-table th, .custom-table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .custom-table th {
+        background-color: #f8f9fa;
+    }
+
+    /* Status badges */
+    .status-pass {
+        padding: 5px 10px;
+        background-color: #28a745;
+        color: white;
+        border-radius: 5px;
+    }
+
+    .status-fail {
+        padding: 5px 10px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 5px;
+    }
+
+</style>
+{% endblock custom_css %}
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<!-- You can add custom JavaScript here if needed -->
+{% endblock custom_js %}

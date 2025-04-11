@@ -1,0 +1,237 @@
+{% extends 'staff_template/base_template.html' %} {% block page_title %} Import
+Attendance {% endblock page_title %} {% block main_content %} {% load static %}
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Import Attendance from Excel</h3>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              <p>
+                Upload an Excel file with attendance data. For best results, use
+                the exact format from the export function.
+              </p>
+              <p>
+                <strong>Required columns:</strong>
+              </p>
+              <ul>
+                <li>
+                  <strong>Student ID</strong> - The student's ID (username) used
+                  for login
+                </li>
+                <li>
+                  <strong>Student Name</strong> - The name of the student (for
+                  reference only)
+                </li>
+                <li><strong>Status</strong> - Must be 'Present' or 'Absent'</li>
+              </ul>
+              <p>
+                <strong>Important:</strong> The recommended way is to
+                <a href="{% url 'staff_export_attendance' %}" class="alert-link"
+                  >export attendance</a
+                >
+                first, modify the Status column as needed, and then import it
+                back. This ensures the columns and format match exactly.
+              </p>
+              <p>
+                The date will be set to the date you select below, regardless of
+                any date in the Excel file.
+              </p>
+              <p>
+                <strong>Note:</strong> The system will try to match students by
+                their ID (username). Make sure the Student ID column contains
+                the correct username for each student.
+              </p>
+            </div>
+
+            {% if not pandas_available %}
+            <div class="alert alert-warning">
+              <p>
+                <strong>Required Library Missing:</strong> The pandas library is
+                not installed. Please ask your system administrator to install
+                it using:
+              </p>
+              <pre>pip install pandas openpyxl</pre>
+              <p>
+                Until this is installed, the import functionality will not work.
+              </p>
+            </div>
+            {% endif %}
+
+            <div
+              id="error-message"
+              class="alert alert-danger"
+              style="display: none"
+            ></div>
+            <div
+              id="success-message"
+              class="alert alert-success"
+              style="display: none"
+            ></div>
+
+            <form id="importForm" method="POST" enctype="multipart/form-data">
+              {% csrf_token %}
+
+              <div class="form-group">
+                <label>Subject</label>
+                <select
+                  class="form-control"
+                  name="subject"
+                  id="subject"
+                  required
+                >
+                  {% for subject in subjects %}
+                  <option value="{{ subject.id }}">
+                    {{ subject.subject_name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Session Year</label>
+                <select
+                  class="form-control"
+                  name="session_year"
+                  id="session_year"
+                  required
+                >
+                  {% for session_year in session_years %}
+                  <option value="{{ session_year.id }}">
+                    {{ session_year.session_start_year }} to {{
+                    session_year.session_end_year }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Attendance Date (if not specified in Excel)</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  name="attendance_date"
+                  id="attendance_date"
+                  value="{{ today_date }}"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Excel File</label>
+                <div class="custom-file">
+                  <input
+                    type="file"
+                    class="custom-file-input"
+                    id="excel_file"
+                    name="excel_file"
+                    accept=".xlsx, .xls"
+                    required
+                  />
+                  <label class="custom-file-label" for="excel_file"
+                    >Choose file</label
+                  >
+                </div>
+                <small class="form-text text-muted"
+                  >Only Excel files (.xlsx, .xls) are accepted.</small
+                >
+              </div>
+
+              <div class="form-group">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  {%
+                  if
+                  not
+                  pandas_available
+                  %}disabled{%
+                  endif
+                  %}
+                >
+                  Import Attendance
+                </button>
+                {% if not pandas_available %}
+                <small class="form-text text-muted"
+                  >Button disabled until pandas library is installed.</small
+                >
+                {% endif %}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock main_content %} {% block custom_js %}
+<script>
+  $(document).ready(function () {
+    // Show selected filename in the custom file input
+    $(".custom-file-input").on("change", function () {
+      var fileName = $(this).val().split("\\").pop();
+      $(this).next(".custom-file-label").html(fileName);
+    });
+
+    // Handle form submission
+    $("#importForm").on("submit", function (e) {
+      e.preventDefault();
+
+      // Show loading message
+      $("#success-message").hide();
+      $("#error-message")
+        .html(
+          '<i class="fas fa-spinner fa-spin mr-2"></i>Importing attendance data, please wait...'
+        )
+        .show();
+
+      // Create form data
+      var formData = new FormData(this);
+
+      // Make AJAX request
+      $.ajax({
+        url: '{% url "staff_import_attendance_data" %}',
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+          if (response.status === "success") {
+            $("#error-message").hide();
+            $("#success-message")
+              .html(
+                '<i class="fas fa-check-circle mr-2"></i>' + response.message
+              )
+              .show();
+
+            // Reset file input
+            $("#excel_file").val("");
+            $(".custom-file-label").html("Choose file");
+          } else {
+            $("#success-message").hide();
+            $("#error-message")
+              .html(
+                '<i class="fas fa-exclamation-circle mr-2"></i>' +
+                  response.message
+              )
+              .show();
+          }
+        },
+        error: function () {
+          $("#success-message").hide();
+          $("#error-message")
+            .html(
+              '<i class="fas fa-exclamation-circle mr-2"></i>An error occurred while importing attendance data.'
+            )
+            .show();
+        },
+      });
+    });
+  });
+</script>
+{% endblock custom_js %}

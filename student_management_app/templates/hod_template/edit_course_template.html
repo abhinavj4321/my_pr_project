@@ -1,0 +1,166 @@
+{% extends 'hod_template/base_template.html' %}
+
+{% block page_title %}
+    Edit Course | #ID : {{ course.id }}
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Edit Course</h3>
+                    </div>
+                    <form role="form" method="POST" action="{% url 'edit_course_save' %}">
+                        {% csrf_token %}
+                        
+                        {% if messages %}
+                        <div class="message-container">
+                            {% for message in messages %}
+                                <div class="message {{ message.tags }}">
+                                    <span>{{ message }}</span>
+                                    <span class="close-btn">&times;</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="course-name">Course Name</label>
+                                <input 
+                                    type="text" 
+                                    id="course-name" 
+                                    name="course" 
+                                    class="input-field" 
+                                    value="{{ course.course_name }}">
+                                <input type="hidden" name="course_id" value="{{ course.id }}">
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn-primary">Update Course</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    /* High-tech CSS styles */
+    .card {
+        border-radius: 10px;
+        background: linear-gradient(145deg, #1c1f26, #252933);
+        box-shadow: 5px 5px 15px #181a1f, -5px -5px 15px #2c3038;
+        padding: 20px;
+        color: #fff;
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .card-header {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #e0e0e0;
+        text-align: center;
+        border-bottom: 2px solid #444;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .input-field {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: #2e333d;
+        color: #fff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+        outline: none;
+        border: 2px solid #4caf50;
+    }
+
+    .btn-primary {
+        background: #4caf50;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: #43a047;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .message-container {
+        margin-bottom: 20px;
+    }
+
+    .message {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+
+    .message.error {
+        background: #e57373;
+        color: #fff;
+    }
+
+    .message.success {
+        background: #81c784;
+        color: #fff;
+    }
+
+    .close-btn {
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+
+    .close-btn:hover {
+        color: #ccc;
+    }
+</style>
+
+<script>
+    // Close message logic
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".close-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                btn.parentElement.style.display = "none";
+            });
+        });
+    });
+</script>
+
+{% endblock main_content %}

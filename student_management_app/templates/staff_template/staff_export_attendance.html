@@ -1,0 +1,291 @@
+{% extends 'staff_template/base_template.html' %} {% block page_title %} Export
+Attendance {% endblock page_title %} {% block main_content %} {% load static %}
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Export Attendance to Excel</h3>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              <p>
+                Select a subject, session year, and date range to export
+                attendance data to Excel.
+              </p>
+              <p>The exported file will include the following columns:</p>
+              <ul>
+                <li>
+                  <strong>Student ID</strong> - The student's ID (username) used
+                  for login
+                </li>
+                <li>
+                  <strong>Student Name</strong> - The full name of the student
+                </li>
+                <li>
+                  <strong>Date columns</strong> - One column for each date in
+                  the selected range
+                </li>
+                <li>
+                  <strong>Summary columns</strong> - Total classes, attended
+                  classes, and attendance percentage
+                </li>
+              </ul>
+              <p>
+                <strong>Note:</strong> The exported file can be modified and
+                imported back using the
+                <a href="{% url 'staff_import_attendance' %}" class="alert-link"
+                  >import attendance</a
+                >
+                feature.
+              </p>
+            </div>
+
+            <div
+              id="error-message"
+              class="alert alert-danger"
+              style="display: none"
+            ></div>
+            <div
+              id="success-message"
+              class="alert alert-success"
+              style="display: none"
+            ></div>
+
+            <!-- Form for export -->
+            <form id="export-form">
+              {% csrf_token %}
+              <div class="form-group">
+                <label>Subject</label>
+                <select
+                  class="form-control"
+                  name="subject"
+                  id="subject"
+                  required
+                >
+                  <option value="">Select Subject</option>
+                  {% for subject in subjects %}
+                  <option value="{{ subject.id }}">
+                    {{ subject.subject_name }}
+                  </option>
+                  {% endfor %}
+                </select>
+                {% if subjects|length == 0 %}
+                <div class="text-danger mt-2">
+                  No subjects assigned to you. Please contact the administrator.
+                </div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label>Session Year</label>
+                <select
+                  class="form-control"
+                  name="session_year"
+                  id="session_year"
+                  required
+                >
+                  <option value="">Select Session Year</option>
+                  {% for session_year in session_years %}
+                  <option value="{{ session_year.id }}">
+                    {{ session_year.session_start_year }} to {{
+                    session_year.session_end_year }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Start Date</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  name="start_date"
+                  id="start_date"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label>End Date</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  name="end_date"
+                  id="end_date"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <button
+                  type="button"
+                  id="export-button"
+                  class="btn btn-primary"
+                >
+                  <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
+                <div id="loading" style="display: none" class="mt-2">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                  </div>
+                  <span class="ml-2">Generating export file...</span>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock main_content %} {% block custom_js %}
+<script>
+  $(document).ready(function () {
+    // Set default dates
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+
+    // Format dates for input fields
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    $("#start_date").val(formatDate(oneMonthAgo));
+    $("#end_date").val(formatDate(today));
+
+    // Handle export button click
+    $("#export-button").click(function () {
+      // Validate form
+      if (!$("#export-form")[0].checkValidity()) {
+        $("#export-form")[0].reportValidity();
+        return;
+      }
+
+      const subject = $("#subject").val();
+      const session_year = $("#session_year").val();
+      const start_date = $("#start_date").val();
+      const end_date = $("#end_date").val();
+
+      // Validate date range
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
+
+      if (startDate > endDate) {
+        $("#error-message").text("Start date cannot be after end date").show();
+        $("#success-message").hide();
+        return;
+      }
+
+      if ((endDate - startDate) / (1000 * 60 * 60 * 24) > 365) {
+        $("#error-message").text("Date range cannot exceed 1 year").show();
+        $("#success-message").hide();
+        return;
+      }
+
+      // Show loading indicator
+      $("#loading").show();
+      $("#export-button").prop("disabled", true);
+      $("#error-message").hide();
+      $("#success-message").hide();
+
+      // Create form data
+      const formData = new FormData();
+      formData.append("subject", subject);
+      formData.append("session_year", session_year);
+      formData.append("start_date", start_date);
+      formData.append("end_date", end_date);
+
+      // Get CSRF token
+      const csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+      formData.append("csrfmiddlewaretoken", csrf_token);
+
+      // Make AJAX request
+      $.ajax({
+        url: '{% url "staff_export_attendance_data" %}',
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        xhrFields: {
+          responseType: "blob", // Important for handling binary data
+        },
+        success: function (blob, status, xhr) {
+          // Check if the response is JSON (error message)
+          const contentType = xhr.getResponseHeader("content-type");
+          if (contentType && contentType.indexOf("application/json") !== -1) {
+            // It's an error message in JSON format
+            const reader = new FileReader();
+            reader.onload = function () {
+              try {
+                const jsonResponse = JSON.parse(reader.result);
+                $("#error-message").text(jsonResponse.message).show();
+              } catch (e) {
+                $("#error-message")
+                  .text("An error occurred while processing your request.")
+                  .show();
+              }
+              $("#loading").hide();
+              $("#export-button").prop("disabled", false);
+            };
+            reader.readAsText(blob);
+            return;
+          }
+
+          // It's a file download
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+
+          // Get filename from Content-Disposition header or create a default one
+          let filename = "attendance_export.xlsx";
+          const disposition = xhr.getResponseHeader("Content-Disposition");
+          if (disposition && disposition.indexOf("attachment") !== -1) {
+            const filenameRegex = /filename[^;=\\n]*=((['\"]).*?\\2|[^;\\n]*)/;
+            const matches = filenameRegex.exec(disposition);
+            if (matches != null && matches[1]) {
+              filename = matches[1].replace(/['\\"]/g, "");
+            }
+          }
+
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+
+          // Cleanup
+          window.URL.revokeObjectURL(url);
+          $("#success-message")
+            .text("Export successful! Your file is downloading.")
+            .show();
+          $("#loading").hide();
+          $("#export-button").prop("disabled", false);
+        },
+        error: function (xhr, status, error) {
+          let errorMessage = "An error occurred while processing your request.";
+
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.message) {
+              errorMessage = response.message;
+            }
+          } catch (e) {
+            // If we can't parse the error, use the default message
+          }
+
+          $("#error-message").text(errorMessage).show();
+          $("#loading").hide();
+          $("#export-button").prop("disabled", false);
+        },
+      });
+    });
+  });
+</script>
+{% endblock custom_js %}

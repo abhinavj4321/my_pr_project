@@ -1,0 +1,238 @@
+{% extends 'hod_template/base_template.html' %}
+
+{% block page_title %}
+    Manage Course
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+
+        <a class="custom-btn" href="{% url 'add_course' %}" role="button">+ Add Course</a> <br/>&nbsp;
+
+        {% if messages %}
+            <div class="form-group">
+                <div class="col-12">
+                    {% for message in messages %}
+                        {% if message.tags == "error" %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% elif message.tags == "success" %}
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card custom-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Course Details</h3>
+
+                        <div class="card-tools">
+                            <div class="input-group input-group-sm" style="width: 150px;">
+                                <input type="text" name="table_search" class="form-control search-input" placeholder="Search">
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn custom-btn search-btn"><i class="fas fa-search"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table custom-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Course Name</th>
+                                    <th>Created At</th>
+                                    <th>Updated At</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in courses %}
+                                <tr>
+                                    <td>{{ course.id }}</td>
+                                    <td>{{ course.course_name }}</td>
+                                    <td>{{ course.created_at }}</td>
+                                    <td>{{ course.updated_at }}</td>
+                                    <td>
+                                        <a href="{% url 'edit_course' course.id %}" class="custom-btn btn-edit btn-action">Edit</a>
+                                        <a href="{% url 'delete_course' course.id %}" class="custom-btn btn-delete btn-action">Delete</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}
+
+<style>
+    /* High-tech CSS styling */
+    .custom-btn {
+        background-color: #00ff00;
+        color: #1a1a1a;
+        font-size: 1rem;
+        font-weight: bold;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        text-decoration: none; /* Remove underline */
+        display: inline-block;
+    }
+
+    .custom-btn:hover {
+        background-color: #00cc00;
+    }
+
+    .btn-edit {
+        background-color: #3399ff;
+    }
+
+    .btn-edit:hover {
+        background-color: #007acc;
+    }
+
+    .btn-delete {
+        background-color: #ff4d4d;
+    }
+
+    .btn-delete:hover {
+        background-color: #cc0000;
+    }
+
+    /* Space between Edit and Delete buttons */
+    .btn-action {
+        margin-right: 10px; /* Add space between buttons */
+    }
+
+    .custom-card {
+        background-color: #333;
+        color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        padding: 15px;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .custom-table th, .custom-table td {
+        padding: 12px;
+        border: 1px solid #444;
+        text-align: left;
+    }
+
+    .custom-table th {
+        background-color: #444;
+        color: #00ff00;
+    }
+
+    .custom-table tr:nth-child(even) {
+        background-color: #2b2b2b;
+    }
+
+    .custom-table tr:hover {
+        background-color: #3a3a3a;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #444;
+        padding-bottom: 10px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .input-group {
+        width: auto;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .search-input {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #555;
+        border-radius: 4px;
+        padding: 10px;
+    }
+
+    .input-group-append button {
+        background-color: #00cc00;
+        color: #fff;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .input-group-append button:hover {
+        background-color: #009900;
+    }
+
+    .alert {
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 1rem;
+        position: relative;
+    }
+
+    .alert button.close {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        font-size: 1.2rem;
+        color: #fff;
+    }
+
+    .alert-success {
+        background-color: #00cc00;
+        color: #fff;
+    }
+
+    .alert-danger {
+        background-color: #ff4d4d;
+        color: #fff;
+    }
+
+    @media (max-width: 768px) {
+        .btn-action {
+            display: block;
+            margin-bottom: 10px; /* Stack the buttons vertically on small screens */
+            width: 100%;
+        }
+    }
+</style>

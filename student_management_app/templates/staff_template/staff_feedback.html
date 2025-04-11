@@ -1,0 +1,130 @@
+{% extends 'staff_template/base_template.html' %}
+
+{% block page_title %}
+    Feedback
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Provide Feedback</h3>
+                    </div>
+
+                    {% if messages %}
+                    <div class="form-group">
+                        <div class="col-12">
+                            {% for message in messages %}
+                                {% if message.tags == "error" %}
+                                    <div class="alert alert-danger">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                {% elif message.tags == "success" %}
+                                    <div class="alert alert-success">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" action="#">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Feedback Type</label>
+                                <select class="form-control" name="feedback_type" required>
+                                    <option value="">Select Feedback Type</option>
+                                    <option value="System">System Feedback</option>
+                                    <option value="Academic">Academic Feedback</option>
+                                    <option value="Infrastructure">Infrastructure Feedback</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Feedback Subject</label>
+                                <input type="text" class="form-control" name="feedback_subject" placeholder="Enter a brief subject" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Feedback Details</label>
+                                <textarea class="form-control" name="feedback_message" rows="5" placeholder="Please provide detailed feedback" required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Previous Feedback</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Subject</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- This is a placeholder for feedback history data -->
+                                <tr>
+                                    <td colspan="4" class="text-center">No feedback submissions found.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function() {
+        // Character counter for feedback message
+        $('textarea[name="feedback_message"]').on('input', function() {
+            var maxLength = 500;
+            var currentLength = $(this).val().length;
+            
+            if (currentLength > maxLength) {
+                $(this).val($(this).val().substring(0, maxLength));
+                currentLength = maxLength;
+            }
+            
+            if (!$('#char-counter').length) {
+                $(this).after('<small id="char-counter" class="form-text text-muted"></small>');
+            }
+            
+            $('#char-counter').text(currentLength + '/' + maxLength + ' characters');
+        });
+    });
+</script>
+{% endblock custom_js %}

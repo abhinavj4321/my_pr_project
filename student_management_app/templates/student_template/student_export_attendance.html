@@ -1,0 +1,99 @@
+{% extends 'student_template/base_template.html' %}
+
+{% block page_title %}
+    Export Attendance
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Export Attendance Report</h3>
+                    </div>
+
+                    <!-- Changed to direct form submission instead of AJAX -->
+                    <form id="export-form" method="post" action="{% url 'student_export_attendance_data' %}" target="_blank">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Subject</label>
+                                <select class="form-control" name="subject" id="subject">
+                                    <option value="0">All Subjects</option>
+                                    {% for subject in subjects %}
+                                    <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Date Range</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label>Start Date</label>
+                                        <input type="date" class="form-control" name="start_date" id="start_date">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label>End Date</label>
+                                        <input type="date" class="form-control" name="end_date" id="end_date">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary" id="export_attendance">Export to Excel</button>
+                        </div>
+
+                        <div class="card-footer">
+                            <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function () {
+        // Set default date values (current semester - last 4 months)
+        var today = new Date();
+        var fourMonthsAgo = new Date();
+        fourMonthsAgo.setMonth(today.getMonth() - 4);
+        
+        $('#start_date').val(fourMonthsAgo.toISOString().split('T')[0]);
+        $('#end_date').val(today.toISOString().split('T')[0]);
+        
+        // Form validation
+        $("#export-form").submit(function(e) {
+            var start_date = $("#start_date").val();
+            var end_date = $("#end_date").val();
+            
+            if (!start_date || !end_date) {
+                e.preventDefault();
+                $("#error-message").text("Please select date range").show();
+                return false;
+            }
+            
+            // Validate date range
+            if (new Date(start_date) > new Date(end_date)) {
+                e.preventDefault();
+                $("#error-message").text("Start date cannot be after end date").show();
+                return false;
+            }
+            
+            $("#error-message").hide();
+            return true;
+        });
+    });
+</script>
+{% endblock custom_js %}

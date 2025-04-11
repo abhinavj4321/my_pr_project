@@ -1,0 +1,149 @@
+{% extends 'hod_template/base_template.html' %}
+
+{% block page_title %}
+    Add Course
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<style>
+    .content {
+        padding: 20px;
+        font-family: Arial, sans-serif;
+    }
+
+    .container-fluid {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card {
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #fff;
+        padding: 20px;
+    }
+
+    .card-header {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        font-size: 1em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 15px;
+        font-size: 1em;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .alert {
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 10px;
+        font-size: 0.9em;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert button {
+        background: none;
+        border: none;
+        font-size: 1.2em;
+        color: #333;
+        cursor: pointer;
+    }
+
+    .alert button:hover {
+        color: #000;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                Add Course
+            </div>
+
+            <form role="form" method="POST" action="{% url 'add_course_save' %}">
+                {% csrf_token %}
+
+                {% if messages %}
+                    <div class="form-group">
+                        <div class="col-12">
+                            {% for message in messages %}
+                                {% if message.tags == "error" %}
+                                    <div class="alert alert-danger">
+                                        {{ message }}
+                                        <button type="button" aria-label="Close">&times;</button>
+                                    </div>
+                                {% elif message.tags == "success" %}
+                                    <div class="alert alert-success">
+                                        {{ message }}
+                                        <button type="button" aria-label="Close">&times;</button>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label>Course Name</label>
+                    <input type="text" class="form-control" name="course" placeholder="Enter Course">
+                </div>
+
+                <button type="submit" class="btn-primary">Add Course</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+{% endblock main_content %}

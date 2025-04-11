@@ -1,0 +1,157 @@
+{% load static %}
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="{% url 'student_home' %}" class="brand-link">
+      <img src="{% static 'dist/img/AdminLTELogo.png' %}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
+           style="opacity: .8">
+      <span class="brand-text font-weight-light">Student Management</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar user panel (optional) -->
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+          <img src="{% static 'dist/img/user2-160x160.jpg' %}" class="img-circle elevation-2" alt="User Image">
+        </div>
+        <div class="info">
+          <a href="#" class="d-block">{{ user.first_name }} {{ user.last_name }}</a>
+        </div>
+      </div>
+
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <!-- Add icons to the links using the .nav-icon class
+               with font-awesome or any other icon font library -->
+          <li class="nav-item">
+            <a href="{% url 'student_home' %}" class="nav-link {% if request.path == '/student/home/' %} active {% endif %}">
+              <i class="nav-icon fas fa-th"></i>
+              <p>
+                Home
+              </p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'student_view_attendance' %}" class="nav-link {% if request.path == '/student/view-attendance/' %} active {% endif %}">
+              <i class="nav-icon fas fa-calendar-alt"></i>
+              <p>
+                View Attendance
+              </p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'student_upload_qr' %}" class="nav-link {% if request.path == '/student/upload-qr/' %} active {% endif %}">
+              <i class="nav-icon fas fa-upload"></i>
+              <p>
+                Upload QR Code
+              </p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'student_scan_qr' %}" class="nav-link {% if request.path == '/student/scan-qr/' %} active {% endif %}">
+              <i class="nav-icon fas fa-camera"></i>
+              <p>
+                Scan QR Code
+              </p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'student_export_attendance' %}" class="nav-link {% if request.path == '/student/export-attendance/' %} active {% endif %}">
+              <i class="nav-icon fas fa-file-excel"></i>
+              <p>
+                Export Attendance
+              </p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'student_view_result' %}" class="nav-link {% if request.path == '/student/view-result/' %} active {% endif %}">
+              <i class="nav-icon fas fa-tasks"></i>
+              <p>
+                View Result
+              </p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+<style>
+    /* Sidebar Container */
+    .sidebar-dark-primary {
+        background-color: #343a40;
+        height: 100vh;
+        color: white;
+        position: fixed;
+        width: 250px;
+    }
+
+    /* Sidebar Brand */
+    .brand-link {
+        background-color: #222d32;
+        padding: 15px;
+        text-align: center;
+        color: white;
+        display: block;
+    }
+
+    .brand-text {
+        font-size: 1.25rem;
+        font-weight: bold;
+    }
+
+    /* User Panel */
+    .user-panel {
+        padding: 10px 15px;
+        background-color: #3c8dbc;
+    }
+
+    .info a {
+        color: white;
+        font-size: 1rem;
+        text-decoration: none;
+    }
+
+    .info a:hover {
+        color: #ffcc00;
+    }
+
+    /* Nav Menu */
+    .nav-pills {
+        list-style: none;
+        padding-left: 0;
+        margin-top: 20px;
+    }
+
+    .nav-item {
+        width: 100%;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: white;
+        text-decoration: none;
+        font-size: 1rem;
+        border-left: 4px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .nav-link:hover {
+        background-color: #495057;
+    }
+
+    .nav-link.active {
+        background-color: #007bff;
+        border-left: 4px solid #0056b3;
+    }
+
+    .nav-icon {
+        margin-right: 10px;
+    }
+</style>

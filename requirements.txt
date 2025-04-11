@@ -1,0 +1,35 @@
+# Django and related packages
+Django==3.0.7
+asgiref==3.2.10
+pytz==2020.1
+sqlparse==0.3.1
+django-extensions==3.0.2
+
+# Database connectors
+mysql-connector-python==8.0.20
+protobuf==3.12.2
+
+# Excel handling
+openpyxl==3.1.2
+xlsxwriter==3.1.2
+pandas==2.0.3
+
+# QR code generation and scanning
+qrcode==7.4.2
+pyzbar==0.1.9
+pillow==9.5.0
+
+# Geolocation
+geopy==2.3.0
+
+# Visualization and diagrams
+graphviz==0.14
+pydot==1.4.1
+pyparsing==2.4.7
+
+# Computer vision
+opencv-python==4.8.0.76
+numpy==1.24.3
+
+# Utilities
+six==1.15.0

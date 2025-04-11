@@ -1,0 +1,552 @@
+{% extends 'staff_template/base_template.html' %} {% block page_title %} View
+Update Attendance {% endblock page_title %} {% block main_content %} {% load
+static %}
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card custom-card">
+          <div class="card-header">
+            <h3 class="card-title">View Update Attendance</h3>
+          </div>
+
+          {% if messages %}
+          <div class="form-group">
+            <div class="col-12">
+              {% for message in messages %} {% if message.tags == "error" %}
+              <div class="alert alert-danger">
+                {{ message }}
+                <button
+                  type="button"
+                  class="close"
+                  data-dismiss="alert"
+                  aria-label="Close"
+                >
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              {% elif message.tags == "success" %}
+              <div class="alert alert-success">
+                {{ message }}
+                <button
+                  type="button"
+                  class="close"
+                  data-dismiss="alert"
+                  aria-label="Close"
+                >
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              {% endif %} {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="card-body">
+            {% csrf_token %}
+            <div class="form-group">
+              <label>Subject</label>
+              <select class="form-control" name="subject" id="subject">
+                {% for subject in subjects %}
+                <option value="{{ subject.id }}">
+                  {{ subject.subject_name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Session Year</label>
+              <select
+                class="form-control"
+                name="session_year_id"
+                id="session_year_id"
+              >
+                {% for session_year in session_years %}
+                <option value="{{ session_year.id }}">
+                  {{ session_year.session_start_year }} to {{
+                  session_year.session_end_year }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <button type="button" class="btn custom-btn" id="fetch_attendance">
+              Fetch Attendance Date
+            </button>
+          </div>
+
+          <div class="card-footer">
+            <div class="form-group" id="attendance_block" style="display: none">
+              <label>Attendance Date</label>
+              <select
+                class="form-control"
+                name="attendance_date"
+                id="attendance_date"
+              ></select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div
+              class="alert alert-danger"
+              id="error_attendance"
+              style="display: none"
+            ></div>
+
+            <div
+              class="alert alert-success"
+              id="success_attendance"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div
+            class="card-footer"
+            id="fetch_student_block"
+            style="display: none"
+          >
+            <button type="button" class="btn custom-btn" id="fetch_student">
+              Fetch Student Data
+            </button>
+          </div>
+
+          <!-- Student data section for displaying attendance records -->
+          <div class="card-footer">
+            <div
+              id="student_data_loading"
+              style="display: none"
+              class="text-center"
+            >
+              <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+              <p class="mt-2">Loading student attendance data...</p>
+            </div>
+            <div id="student_data">
+              <!-- Student attendance data will be loaded here -->
+              {% comment %}
+              <div class="alert alert-info text-center" id="initial_message">
+                <i class="fas fa-info-circle"></i> Select a subject, session
+                year, and attendance date, then click "Fetch Student Data" to
+                view and update attendance records.
+              </div>
+              {% endcomment %}
+            </div>
+          </div>
+
+          <!-- Success/Error messages section -->
+          <div class="card-footer" id="update_result" style="display: none">
+            <div
+              class="alert alert-success"
+              id="update_success"
+              style="display: none"
+            >
+              <i class="fas fa-check-circle"></i> Attendance updated
+              successfully!
+            </div>
+            <div
+              class="alert alert-danger"
+              id="update_error"
+              style="display: none"
+            >
+              <i class="fas fa-exclamation-circle"></i>
+              <span id="error_message">Error updating attendance.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock main_content %} {% block custom_js %}
+
+<script>
+  $(document).ready(function(){
+      // Get CSRF token
+      var csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+
+      // Add CSRF token to all AJAX requests
+      $.ajaxSetup({
+          headers: { "X-CSRFToken": csrf_token }
+      });
+
+      $("#fetch_attendance").click(function(){
+          var subject = $("#subject").val();
+          var session_year_id = $("#session_year_id").val();
+
+          $.ajax({
+              url: '{% url 'get_attendance_dates' %}',
+              type: 'POST',
+              data: {subject: subject, session_year_id: session_year_id, csrfmiddlewaretoken: csrf_token},
+          })
+          .done(function(response){
+              var json_data = JSON.parse(response);
+              if (json_data.length > 0) {
+                  var html_data = "";
+                  for (key in json_data) {
+                      html_data += "<option value='" + json_data[key]["id"] + "'>" + json_data[key]["attendance_date"] + "</option>";
+                  }
+                  $("#error_attendance").html("");
+                  $("#error_attendance").hide();
+                  $("#attendance_block").show();
+                  $("#fetch_student_block").show();
+                  $("#attendance_date").html(html_data);
+              } else {
+                  $("#error_attendance").html("No Attendance Data Found.");
+                  $("#error_attendance").show();
+                  $("#attendance_block").hide();
+                  $("#fetch_student_block").hide();
+                  $("#attendance_date").html("");
+              }
+          })
+          .fail(function(){
+              alert("Error in getting Attendance Dates.");
+              $("#error_attendance").html("");
+              $("#fetch_student_block").hide();
+              $("#attendance_block").hide();
+          });
+      });
+
+      $("#fetch_student").click(function(){
+          var attendance_date = $("#attendance_date").val();
+
+          // Hide any previous messages
+          $("#update_result").hide();
+          $("#update_success").hide();
+          $("#update_error").hide();
+
+          // Show loading spinner
+          $("#initial_message").hide();
+          $("#student_data_loading").show();
+          $("#student_data").hide();
+
+          $.ajax({
+              url: '{% url 'get_attendance_student' %}',
+              type: 'POST',
+              data: {attendance_date: attendance_date, csrfmiddlewaretoken: csrf_token},
+          })
+          .done(function(response){
+              // Hide loading spinner
+              $("#student_data_loading").hide();
+              $("#student_data").show();
+
+              var json_data = JSON.parse(response);
+              console.log(json_data);
+
+              if (json_data.length === 0) {
+                  $("#student_data").html('<div class="alert alert-warning text-center"><i class="fas fa-exclamation-triangle"></i> No attendance records found for this date.</div>');
+                  return;
+              }
+
+              var div_data = "<div class='form-group'><label>Student Attendance: </label></div>";
+              div_data += "<div class='form-group'><div class='row'>";
+
+              for (key in json_data) {
+                  div_data += "<div class='col-lg-3 mb-3'><div class='form-check'><input type='checkbox' ";
+
+                  if (json_data[key]['status']) {
+                      div_data += "checked='checked'";
+                  } else {
+                      div_data += "";
+                  }
+
+                  div_data += "name='student_data[]' value='" + json_data[key]['id'] + "' />  <label class='form-check-label'>" + json_data[key]['name'] + " </label>";
+
+                  if (json_data[key]['status']) {
+                      div_data += "<span class='badge badge-success ml-2'>Present</span>";
+                  } else {
+                      div_data += "<span class='badge badge-danger ml-2'>Absent</span>";
+                  }
+
+                  // Add location verification status if available
+                  if (json_data[key].hasOwnProperty('location_verified')) {
+                      if (json_data[key]['location_verified']) {
+                          div_data += "<span class='badge badge-info ml-1' title='Location verified'><i class='fas fa-map-marker-alt'></i></span>";
+                      }
+                  }
+
+                  div_data += "</div></div>";
+              }
+              div_data += "</div></div>";
+              div_data += "<div class='form-group'>";
+              div_data += "<button id='save_attendance' class='btn custom-btn-success' type='button'>Save Attendance Data</button>";
+              div_data += "</div>";
+              $("#student_data").html(div_data);
+          })
+          .fail(function(xhr, status, error){
+              // Hide loading spinner
+              $("#student_data_loading").hide();
+              $("#student_data").show();
+
+              // Show error message
+              $("#error_message").text("Error fetching student data: " + error);
+              $("#update_result").show();
+              $("#update_error").show();
+          });
+
+          $(document).on("click", "#save_attendance", function(){
+              // Disable button and show saving state
+              var saveBtn = $(this);
+              saveBtn.attr("disabled", "disabled");
+              saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+              // Hide any previous messages
+              $("#update_result").hide();
+              $("#update_success").hide();
+              $("#update_error").hide();
+
+              var student_data = $("input[name='student_data[]']").map(function(){
+                  if ($(this).is(":checked")) {
+                      return {"id": $(this).val(), "status": 1};
+                  } else {
+                      return {"id": $(this).val(), "status": 0};
+                  }
+              }).get();
+
+              var attendance_date = $("#attendance_date").val();
+              student_data = JSON.stringify(student_data);
+
+              $.ajax({
+                  url: '{% url 'update_attendance_data' %}',
+                  type: 'POST',
+                  data: {student_ids: student_data, attendance_date: attendance_date},
+              })
+              .done(function(response){
+                  // Re-enable button
+                  saveBtn.removeAttr("disabled");
+                  saveBtn.html('Save Attendance Data');
+
+                  // Show result
+                  $("#update_result").show();
+
+                  if (response == "OK") {
+                      $("#update_success").show();
+
+                      // Highlight updated records
+                      $(".form-check").addClass("updated-record");
+
+                      // Scroll to success message
+                      $('html, body').animate({
+                          scrollTop: $("#update_success").offset().top - 100
+                      }, 500);
+                  } else {
+                      $("#error_message").text("Failed to save attendance data. Please try again.");
+                      $("#update_error").show();
+                  }
+              })
+              .fail(function(xhr, status, error){
+                  // Re-enable button
+                  saveBtn.removeAttr("disabled");
+                  saveBtn.html('Save Attendance Data');
+
+                  // Show error message
+                  $("#error_message").text("Error saving attendance data: " + error);
+                  $("#update_result").show();
+                  $("#update_error").show();
+              });
+          });
+      });
+  });
+</script>
+
+{% endblock custom_js %}
+
+<style>
+  /* General Styles */
+  .container-fluid {
+    padding: 20px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .col-md-12 {
+    width: 100%;
+  }
+
+  /* Card Styling */
+  .custom-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+
+  .card-header {
+    background-color: #f4f6f9;
+    border-bottom: 1px solid #ddd;
+    padding: 15px;
+  }
+
+  .card-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .card-body {
+    padding: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+  }
+
+  /* Button Styling */
+  .custom-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+
+  .custom-btn:hover {
+    background-color: #0056b3;
+  }
+
+  .custom-btn-success {
+    background-color: #28a745;
+  }
+
+  .custom-btn-success:hover {
+    background-color: #218838;
+  }
+
+  /* Alert Styling */
+  .alert {
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+  }
+
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  /* Close Button */
+  .close {
+    font-size: 1.5rem;
+    color: #000;
+  }
+
+  /* Hide by default */
+  #attendance_block,
+  #fetch_student_block {
+    display: none;
+  }
+
+  /* Badge styling */
+  .badge {
+    display: inline-block;
+    padding: 0.25em 0.4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+  }
+
+  .badge-success {
+    color: #fff;
+    background-color: #28a745;
+  }
+
+  .badge-danger {
+    color: #fff;
+    background-color: #dc3545;
+  }
+
+  .badge-info {
+    color: #fff;
+    background-color: #17a2b8;
+  }
+
+  .ml-1 {
+    margin-left: 0.25rem !important;
+  }
+
+  .ml-2 {
+    margin-left: 0.5rem !important;
+  }
+
+  .mb-3 {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Loading spinner */
+  .spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: text-bottom;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+  }
+
+  @keyframes spinner-border {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .text-center {
+    text-align: center !important;
+  }
+
+  .text-primary {
+    color: #007bff !important;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Highlight updated records */
+  .updated-record {
+    transition: background-color 0.5s ease;
+    background-color: #d4edda;
+    padding: 8px;
+    border-radius: 4px;
+  }
+</style>

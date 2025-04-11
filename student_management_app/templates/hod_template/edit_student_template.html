@@ -1,0 +1,99 @@
+{% extends 'hod_template/base_template.html' %}
+
+{% block page_title %}
+    Edit Student | Username: {{ username }} | #ID : {{ id }}
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<style>
+    /* High-tech card styling */
+    .custom-card {
+        background-color: #1a1a1a;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #333;
+        color: #f0f0f0;
+    }
+
+    .custom-header {
+        background-color: #333;
+        color: #00ff00;  /* Neon green */
+        border-bottom: 2px solid #00ff00;
+        padding: 10px 15px;
+        font-family: 'Roboto', sans-serif;
+        font-weight: bold;
+    }
+
+    .custom-header h3 {
+        font-size: 1.5rem;
+        text-transform: uppercase;
+    }
+
+    .card-title {
+        font-size: 18px;
+        color: #00ff00;
+    }
+
+    /* Form styling */
+    .custom-form {
+        background-color: #2b2b2b;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .custom-form input, .custom-form select, .custom-form textarea {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #555;
+        border-radius: 4px;
+        padding: 10px;
+        font-size: 1rem;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .custom-form button {
+        background-color: #00ff00;
+        color: #1a1a1a;
+        font-size: 1.1rem;
+        font-weight: bold;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .custom-form button:hover {
+        background-color: #00cc00;
+    }
+
+    .custom-form .form-group {
+        margin-bottom: 20px;
+    }
+</style>
+
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card custom-card">
+                    <div class="card-header custom-header">
+                        <h3 class="card-title">Edit Student</h3>
+                    </div>
+                    
+                    {% url 'edit_student_save' as action_path %}
+                    {% include 'hod_template/form_template.html' with messages=messages form=form action_path=action_path button_text="Update Student" %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}

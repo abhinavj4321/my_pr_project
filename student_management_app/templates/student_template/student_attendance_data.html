@@ -1,0 +1,115 @@
+{% extends 'student_template/base_template.html' %}
+
+{% block custom_css %}
+<style>
+    /* Custom styles for Attendance Divs */
+    .attendance_div_red {
+        padding: 20px 10px;
+        background: #f44336;
+        border: 10px solid white;
+        text-align: center;
+        color: #fff;
+        border-radius: 30px;
+        box-shadow: 1px 1px 1px grey;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        width: 100%;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .attendance_div_green {
+        padding: 20px 10px;
+        background: #4CAF50;
+        border: 10px solid white;
+        text-align: center;
+        color: #fff;
+        border-radius: 30px;
+        box-shadow: 1px 1px 1px grey;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        width: 100%;
+        display: inline-block;
+        text-align: center;
+    }
+
+    /* Styling for the card */
+    .attendance-card {
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .attendance-card-header {
+        background-color: #007bff;
+        padding: 10px;
+        color: white;
+        font-size: 1.5rem;
+        text-align: center;
+    }
+
+    /* Content styling */
+    .content {
+        padding: 30px;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .col-lg-3 {
+        flex: 1;
+        min-width: 22%;
+        margin: 10px;
+    }
+</style>
+{% endblock custom_css %}
+
+{% block page_title %}
+    View Attendance Data
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="attendance-card">
+                    <div class="attendance-card-header">
+                        <h3>Attendance Data for {{ subject_obj.subject_name }}</h3>
+                    </div>
+     
+                    <div class="card-body">
+                        <div class="row">
+                            {% for attendance_report in attendance_reports %}
+                                {% if attendance_report.status == True %}
+                                    <div class="col-lg-3 attendance_div_green">
+                                        <b>Date: {{ attendance_report.attendance_id.attendance_date }}</b><br/>
+                                        <b>[ Status: Present ]</b>
+                                    </div>
+                                {% else %}
+                                    <div class="col-lg-3 attendance_div_red">
+                                        <b>Date: {{ attendance_report.attendance_id.attendance_date }}</b><br/>
+                                        <b>[ Status: Absent ]</b>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+
+{% endblock custom_js %}

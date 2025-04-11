@@ -1,0 +1,269 @@
+{% extends 'staff_template/base_template.html' %} {% block page_title %} Staff
+Home {% endblock page_title %} {% block main_content %} {% load static %}
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+          <div class="inner">
+            <h3>{{ students_count }}</h3>
+            <p>Students Under Me</p>
+          </div>
+          <div class="icon">
+            <i class="ion ion-stats-bars"></i>
+          </div>
+          <a href="{% url 'staff_take_attendance' %}" class="small-box-footer"
+            >More info <i class="fas fa-arrow-circle-right"></i
+          ></a>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+          <div class="inner">
+            <h3>{{ attendance_count }}</h3>
+            <p>Attendance Taken</p>
+          </div>
+          <div class="icon">
+            <i class="ion ion-stats-bars"></i>
+          </div>
+          <a href="{% url 'staff_view_attendance' %}" class="small-box-footer"
+            >More info <i class="fas fa-arrow-circle-right"></i
+          ></a>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>{{ subject_count }}</h3>
+            <p>Subjects</p>
+          </div>
+          <div class="icon">
+            <i class="ion ion-stats-bars"></i>
+          </div>
+          <a href="#" class="small-box-footer"
+            >More info <i class="fas fa-arrow-circle-right"></i
+          ></a>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+          <div class="inner">
+            <h3>{{ subject_list|length }}</h3>
+            <p>Total Subjects</p>
+          </div>
+          <div class="icon">
+            <i class="ion ion-pie-graph"></i>
+          </div>
+          <a href="#" class="small-box-footer"
+            >More info <i class="fas fa-arrow-circle-right"></i
+          ></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject-specific attendance section -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Take Attendance by Subject</h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              {% for subject in subjects %}
+              <div class="col-md-4 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ subject.subject_name }}</h5>
+                    <p class="card-text">
+                      Course: {{ subject.course_id.course_name }}
+                    </p>
+                    <div class="d-flex justify-content-between mt-3">
+                      <a
+                        href="{% url 'staff_take_attendance' %}?subject={{ subject.id }}"
+                        class="btn btn-primary btn-sm"
+                      >
+                        <i class="fas fa-clipboard-check"></i> Take
+                      </a>
+                      <a
+                        href="{% url 'staff_update_attendance' %}"
+                        class="btn btn-warning btn-sm"
+                      >
+                        <i class="fas fa-edit"></i> Update
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% empty %}
+              <div class="col-12">
+                <div class="alert alert-info">No subjects assigned to you.</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Students under staff section -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Students Under Me</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Course</th>
+                    <th>Present Count</th>
+                    <th>Absent Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student in students_attendance %}
+                  <tr>
+                    <td>
+                      {{ student.admin.first_name }} {{ student.admin.last_name
+                      }}
+                    </td>
+                    <td>{{ student.course_id.course_name }}</td>
+                    <td>{{ student.attendance_present }}</td>
+                    <td>{{ student.attendance_absent }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center">No students found</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock main_content %} {% block custom_js %} {% endblock custom_js %}
+
+<style>
+  /* Container style */
+  .container-fluid {
+    padding: 20px;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .col-lg-3,
+  .col-6 {
+    width: 30%;
+    margin-bottom: 20px;
+  }
+
+  /* Small box style */
+  .small-box {
+    border-radius: 5px;
+    position: relative;
+    display: block;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  }
+
+  .small-box > .inner {
+    padding: 10px;
+  }
+
+  .small-box h3 {
+    font-size: 38px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    white-space: nowrap;
+    padding: 0;
+  }
+
+  .small-box p {
+    font-size: 15px;
+    margin-bottom: 0;
+  }
+
+  .small-box .icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 0;
+    font-size: 70px;
+    color: rgba(0, 0, 0, 0.15);
+  }
+
+  .small-box > .small-box-footer {
+    position: relative;
+    text-align: center;
+    padding: 3px 0;
+    color: #fff;
+    color: rgba(255, 255, 255, 0.8);
+    display: block;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+  }
+
+  .small-box > .small-box-footer:hover {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  /* Background colors */
+  .bg-info {
+    background-color: #17a2b8 !important;
+    color: #fff !important;
+  }
+
+  .bg-success {
+    background-color: #28a745 !important;
+    color: #fff !important;
+  }
+
+  .bg-warning {
+    background-color: #ffc107 !important;
+    color: #1f2d3d !important;
+  }
+
+  .bg-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+  }
+
+  /* Button styles */
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+  }
+
+  .d-flex {
+    display: flex !important;
+  }
+
+  .justify-content-between {
+    justify-content: space-between !important;
+  }
+
+  .mt-3 {
+    margin-top: 1rem !important;
+  }
+</style>

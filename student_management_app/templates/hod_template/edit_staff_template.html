@@ -1,0 +1,210 @@
+{% extends 'hod_template/base_template.html' %}
+
+{% block page_title %}
+    Edit Staff | Username: {{ staff.admin.username }} | #ID : {{ staff.admin.id }}
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Edit Staff</h3>
+                    </div>
+                    
+                    <form role="form" method="POST" action="{% url 'edit_staff_save' %}">
+                        {% csrf_token %}
+
+                        {% if messages %}
+                        <div class="message-container">
+                            {% for message in messages %}
+                            <div class="message {{ message.tags }}">
+                                <span>{{ message }}</span>
+                                <span class="close-btn">&times;</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    class="input-field" 
+                                    name="email" 
+                                    value="{{ staff.admin.email }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input 
+                                    type="text" 
+                                    id="username" 
+                                    class="input-field" 
+                                    name="username" 
+                                    value="{{ staff.admin.username }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="first_name">First Name</label>
+                                <input 
+                                    type="text" 
+                                    id="first_name" 
+                                    class="input-field" 
+                                    name="first_name" 
+                                    value="{{ staff.admin.first_name }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="last_name">Last Name</label>
+                                <input 
+                                    type="text" 
+                                    id="last_name" 
+                                    class="input-field" 
+                                    name="last_name" 
+                                    value="{{ staff.admin.last_name }}">
+                                <input 
+                                    type="hidden" 
+                                    name="staff_id" 
+                                    value="{{ staff.admin.id }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="address">Address</label>
+                                <textarea 
+                                    id="address" 
+                                    class="input-field" 
+                                    name="address">{{ staff.address }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn-primary">Update Staff</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    /* High-tech CSS styles */
+    .card {
+        border-radius: 10px;
+        background: linear-gradient(145deg, #1e1f29, #2b2e3a);
+        box-shadow: 5px 5px 15px #171920, -5px -5px 15px #313441;
+        padding: 20px;
+        color: #e0e0e0;
+        font-family: 'Roboto', sans-serif;
+        margin-top: 20px;
+    }
+
+    .card-header {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        border-bottom: 2px solid #444;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #b0b3ba;
+    }
+
+    .input-field {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: #2e3342;
+        color: #fff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+        outline: none;
+        border: 2px solid #4caf50;
+        box-shadow: 0px 4px 10px rgba(0, 255, 0, 0.2);
+    }
+
+    .btn-primary {
+        background: #4caf50;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: #43a047;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .message-container {
+        margin-bottom: 20px;
+    }
+
+    .message {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+
+    .message.error {
+        background: #e57373;
+        color: #fff;
+    }
+
+    .message.success {
+        background: #81c784;
+        color: #fff;
+    }
+
+    .close-btn {
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+
+    .close-btn:hover {
+        color: #ccc;
+    }
+</style>
+
+<script>
+    // Close message logic
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".close-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                btn.parentElement.style.display = "none";
+            });
+        });
+    });
+</script>
+
+{% endblock main_content %}

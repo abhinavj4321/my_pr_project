@@ -1,0 +1,227 @@
+{% extends 'hod_template/base_template.html' %}
+
+{% block page_title %}
+    Add Student
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card custom-card">
+                    <div class="card-header custom-card-header">
+                        <h3 class="card-title custom-card-title">Add Student</h3>
+                    </div>
+
+                    {% url 'add_student_save' as action_path %}
+                    {% include 'hod_template/form_template.html' with messages=messages form=form action_path=action_path button_text="Add Student" %}
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function(){
+            const emailInput = document.getElementById("email");
+            const usernameInput = document.getElementById("username");
+
+            if (emailInput) {
+                emailInput.addEventListener("keyup", function(){
+                    const email = emailInput.value;
+                    if(email !== ""){
+                        fetch('{% url 'check_email_exist' %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({email: email})
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            document.querySelectorAll(".email_error").forEach(el => el.remove());
+                            const errorSpan = document.createElement("span");
+                            errorSpan.className = "email_error";
+                            errorSpan.style.padding = "5px";
+                            errorSpan.style.fontWeight = "bold";
+                            if(data === "True"){
+                                errorSpan.style.color = "red";
+                                errorSpan.textContent = " Email Not Available. ";
+                            } else {
+                                errorSpan.style.color = "green";
+                                errorSpan.textContent = " Email Available. ";
+                            }
+                            emailInput.insertAdjacentElement("afterend", errorSpan);
+                        })
+                        .catch(error => console.error("Failed", error));
+                    } else {
+                        document.querySelectorAll(".email_error").forEach(el => el.remove());
+                    }
+                });
+            }
+
+            if (usernameInput) {
+                usernameInput.addEventListener("keyup", function(){
+                    const username = usernameInput.value;
+                    if(username !== ""){
+                        fetch('{% url 'check_username_exist' %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({username: username})
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            document.querySelectorAll(".username_error").forEach(el => el.remove());
+                            const errorSpan = document.createElement("span");
+                            errorSpan.className = "username_error";
+                            errorSpan.style.padding = "5px";
+                            errorSpan.style.fontWeight = "bold";
+                            if(data === "True"){
+                                errorSpan.style.color = "red";
+                                errorSpan.textContent = " Username Not Available. ";
+                            } else {
+                                errorSpan.style.color = "green";
+                                errorSpan.textContent = " Username Available. ";
+                            }
+                            usernameInput.insertAdjacentElement("afterend", errorSpan);
+                        })
+                        .catch(error => console.error("Failed", error));
+                    } else {
+                        document.querySelectorAll(".username_error").forEach(el => el.remove());
+                    }
+                });
+            }
+        });
+    </script>
+
+{% endblock custom_js %}
+
+<style>
+    /* Custom CSS for Add Student Form */
+    .custom-card {
+        background-color: #333;
+        color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        padding: 15px;
+    }
+
+    .custom-card-header {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    .custom-card-title {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .custom-btn {
+        background-color: #00ff00;
+        color: #1a1a1a;
+        font-size: 1rem;
+        font-weight: bold;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .custom-btn:hover {
+        background-color: #00cc00;
+    }
+
+    /* Form Styling */
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .form-control {
+        padding: 10px;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.7);
+    }
+
+    .email_error, .username_error {
+        padding: 5px;
+        font-weight: bold;
+        display: block;
+        margin-top: 5px;
+    }
+
+    .email_error {
+        color: red;
+    }
+
+    .username_error {
+        color: red;
+    }
+
+    .alert {
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 1rem;
+        position: relative;
+    }
+
+    .alert button.close {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        font-size: 1.2rem;
+        color: #fff;
+    }
+
+    .alert-success {
+        background-color: #00cc00;
+        color: #fff;
+    }
+
+    .alert-danger {
+        background-color: #ff4d4d;
+        color: #fff;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .custom-btn {
+            width: 100%;
+            padding: 15px;
+        }
+    }
+</style>

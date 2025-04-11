@@ -1,0 +1,113 @@
+{% extends 'student_template/base_template.html' %}
+
+{% block page_title %}
+    Upload QR Code for Attendance
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="custom-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Upload QR Code</h3>
+                    </div>
+                    <form id="qrUploadForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Upload QR Code Image</label>
+                                <input type="file" class="form-control" name="qr_image" id="qr_image" accept="image/*" required>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn custom-btn">Submit</button>
+                        </div>
+                    </form>
+                    
+                    <div id="qrResponse" class="alert" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% block custom_css %}
+<style>
+    .custom-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+        padding: 20px;
+    }
+    .custom-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+    }
+    .custom-btn:hover {
+        background-color: #0056b3;
+    }
+    .alert {
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+</style>
+{% endblock custom_css %}
+
+{% block custom_js %}
+<script>
+    document.getElementById("qrUploadForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        
+        let formData = new FormData(this);
+        let responseDiv = document.getElementById("qrResponse");
+        responseDiv.style.display = "none";
+        
+        fetch("{% url 'student_upload_qr' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                'X-CSRFToken': "{{ csrf_token }}"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            responseDiv.style.display = "block";
+            if (data.status === "success") {
+                responseDiv.className = "alert alert-success";
+                responseDiv.innerText = data.message;
+            } else {
+                responseDiv.className = "alert alert-danger";
+                responseDiv.innerText = data.message;
+            }
+        })
+        .catch(error => {
+            responseDiv.style.display = "block";
+            responseDiv.className = "alert alert-danger";
+            responseDiv.innerText = "Error uploading QR code. Please try again.";
+        });
+    });
+</script>
+{% endblock custom_js %}
+
+{% endblock main_content %}

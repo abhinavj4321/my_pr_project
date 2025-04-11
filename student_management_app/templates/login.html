@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %} 
+
+{% block content %}
+
+<body class="hold-transition login-page">
+<div class="login-box">
+  <div class="login-logo">
+    <a href="{% url 'login' %}"><b>Student</b> Attendance System</a>
+  </div>
+  <div class="card">
+    <div class="card-body login-card-body">
+      <p class="login-box-msg">Sign in to start your session</p>
+
+      <form action="{% url 'doLogin' %}" method="POST">
+        {% csrf_token %}
+        <div class="input-group mb-3">
+          <input type="email" class="form-control" placeholder="Email" name="email">
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-envelope"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input type="password" class="form-control" placeholder="Password" name="password">
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-lock"></span>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+          </div>
+        </div>
+      </form>
+
+      {% if messages %}
+        <div class="mt-3">
+          {% for message in messages %}
+            {% if message.tags == "error" %}
+              <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                {{ message }}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+      
+      <div class="text-center mt-4">
+        <p class="mb-1">
+          <small>Use <strong>admin@gmail.com</strong> (password: admin) for HOD login</small>
+        </p>
+        <p class="mb-1">
+          <small>Use <strong>staff@gmail.com</strong> (password: staff) for Staff login</small>
+        </p>
+        <p class="mb-0">
+          <small>Use <strong>student@gmail.com</strong> (password: student) for Student login</small>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'jquery/jquery.min.js' %}"></script>
+<script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'dist/js/adminlte.min.js' %}"></script>
+
+{% endblock %}

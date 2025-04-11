@@ -1,0 +1,216 @@
+{% extends 'staff_template/base_template.html' %}
+
+{% block page_title %}
+    Add Result
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <form method="POST" action="{% url 'staff_add_result_save' %}">
+                    {% csrf_token %}
+                    <div class="card custom-card">
+                        <div class="card-header custom-card-header">
+                            <h3 class="card-title">Add Result</h3>
+                        </div>
+
+                        {% if messages %}
+                            <div class="form-group">
+                                <div class="col-12">
+                                    {% for message in messages %}
+                                    {% if message.tags == "error" %}
+                                        <div class="alert alert-danger custom-alert">
+                                            {{ message }}
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                    {% elif message.tags == "success" %}
+                                        <div class="alert alert-success custom-alert">
+                                            {{ message }}
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Subject</label>
+                                <select class="form-control custom-select" name="subject" id="subject">
+                                    {% for subject in subjects %}
+                                        <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Session Year</label>
+                                <select class="form-control custom-select" name="session_year" id="session_year">
+                                    {% for session_year in session_years %}
+                                        <option value="{{ session_year.id }}">{{ session_year.session_start_year }} to {{ session_year.session_end_year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="button" class="btn custom-btn" id="fetch_student">Fetch Student</button>
+                        </div>
+
+                        <div class="card-footer" id="student_data">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function(){
+        $("#fetch_student").click(function(){
+
+            var subject=$("#subject").val()
+            var session_year=$("#session_year").val()
+
+            $.ajax({
+                url:'{% url 'get_students' %}',
+                type:'POST',
+                data:{subject:subject, session_year:session_year},
+            })
+            .done(function(response){
+                var json_data=JSON.parse(response);
+                console.log(json_data)
+                var div_data="<div class='form-group'><label>Student List</label> <select class='student_list form-control custom-select' name='student_list'>"
+
+                for(key in json_data)
+                {
+                    div_data+="<option value='"+ json_data[key]['id'] +"'>ID: "+ json_data[key]['id'] +" : "+ json_data[key]['name'] +"</option>";
+                }
+                div_data+="</select>";
+                div_data+="</div>";
+                div_data+="<div class='form-group'><div class='row'>";
+
+                div_data+="<div class='col-lg-6'>";
+                div_data+="<label>Assignment Marks : </label><input type='text' name='assignment_marks' class='form-control custom-input' placeholder='Assignment Marks' />";
+                div_data+="</div>";
+
+                div_data+="<div class='col-lg-6'>";
+                div_data+="<label>Exam Marks : </label><input type='text' name='exam_marks' class='form-control custom-input' placeholder='Exam Marks' />";
+                div_data+="</div>";
+
+                div_data+="</div></div>";
+
+                div_data+="<div class='form-group'>";
+                div_data+="<button id='save_attendance' class='btn custom-btn' type='submit'>Save Result</button>";
+                div_data+="</div>";
+                $("#student_data").html(div_data);
+
+            })
+            .fail(function(){
+                alert("Error in Fetching Students.")
+            })
+        })
+    })
+</script>
+{% endblock custom_js %}
+
+<style>
+    /* Custom Styles */
+    .custom-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 20px;
+    }
+
+    .custom-card-header {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 8px;
+    }
+
+    .custom-btn {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .custom-btn:hover {
+        background-color: #45a049;
+    }
+
+    .custom-select {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .custom-input {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .alert {
+        margin-top: 10px;
+        padding: 15px;
+        border-radius: 5px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .close {
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        cursor: pointer;
+    }
+
+    .close span {
+        color: #000;
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+        .custom-card {
+            padding: 15px;
+        }
+
+        .custom-btn {
+            width: 100%;
+        }
+    }
+</style>

@@ -1,0 +1,159 @@
+{% extends 'hod_template/base_template.html' %}
+
+{% block page_title %}
+    Manage Subjects
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+    <div class="container-fluid">
+
+        <a class="custom-btn" href="{% url 'add_subject' %}" role="button">+ Add Subject</a> <br/>&nbsp;
+
+        {% if messages %}
+        <div class="form-group">
+            <div class="col-12">
+                {% for message in messages %}
+                    {% if message.tags == "error" %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif message.tags == "success" %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Subject List</h3>
+
+                        <div class="card-tools">
+                            <div class="input-group input-group-sm" style="width: 150px;">
+                                <input type="text" name="table_search" class="form-control search-input" placeholder="Search">
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn custom-btn search-btn"><i class="fas fa-search"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table custom-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Subject Name</th>
+                                    <th>Course</th>
+                                    <th>Staff</th>
+                                    <th>Created At</th>
+                                    <th>Updated At</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for subject in subjects %}
+                                    <tr>
+                                        <td>{{ subject.id }}</td>
+                                        <td>{{ subject.subject_name }}</td>
+                                        <td>{{ subject.course_id.course_name }}</td>
+                                        <td>{{ subject.staff_id.admin.first_name }} {{ subject.staff_id.admin.last_name }}</td>
+                                        <td>{{ subject.created_at }}</td>
+                                        <td>{{ subject.updated_at }}</td>
+                                        <td>
+                                            <a href="{% url 'edit_subject' subject.id %}" class="custom-btn btn-edit">Edit</a>
+                                            <a href="{% url 'delete_subject' subject.id %}" class="custom-btn btn-delete">Delete</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock main_content %}
+
+<style>
+    .custom-btn {
+        background-color: #4CAF50;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        margin: 4px 2px;
+        transition-duration: 0.4s;
+    }
+    
+    .custom-btn:hover {
+        background-color: #45a049;
+        color: white;
+    }
+    
+    .btn-edit {
+        background-color: #2196F3;
+    }
+    
+    .btn-edit:hover {
+        background-color: #0b7dda;
+    }
+    
+    .btn-delete {
+        background-color: #f44336;
+    }
+    
+    .btn-delete:hover {
+        background-color: #da190b;
+    }
+    
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .custom-table th, .custom-table td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .custom-table tr:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .custom-table th {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    .search-input {
+        padding: 6px;
+        border: 1px solid #ddd;
+        border-radius: 4px 0 0 4px;
+    }
+    
+    .search-btn {
+        border-radius: 0 4px 4px 0;
+    }
+</style>
