@@ -37,7 +37,7 @@ def staff_generate_qr(request):
         expiry_minutes = request.POST.get('expiry_time', 5)
         teacher_latitude = request.POST.get('latitude')
         teacher_longitude = request.POST.get('longitude')
-        allowed_radius = request.POST.get('radius', 10)  
+        allowed_radius = request.POST.get('radius', 10)
 
         # Ensure required fields are present
         if not subject_id or not session_year_id:
@@ -48,7 +48,10 @@ def staff_generate_qr(request):
             session_year = SessionYearModel.objects.get(id=session_year_id)
 
             unique_token = str(uuid.uuid4())
-            qr_data = f"{unique_token}"
+
+            # Create a URL that includes the token for direct scanning
+            # This URL will redirect to the login page if user is not logged in
+            qr_data = f"{request.build_absolute_uri('/scan-attendance/')}?token={unique_token}"
 
             qr = qrcode.make(qr_data)
             qr_io = BytesIO()

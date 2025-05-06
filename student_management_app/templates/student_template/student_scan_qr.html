@@ -638,6 +638,17 @@ QR Code {% endblock page_title %} {% block custom_css %}
 
     // Refresh location periodically
     setInterval(getLocation, 30000); // Every 30 seconds
+
+    // Check if we have a token from external QR code scan
+    {% if attendance_token %}
+    // Process the token from session
+    setTimeout(function() {
+      $("#success-message")
+        .html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing attendance from QR code...')
+        .show();
+      processQRCode("{{ attendance_token }}");
+    }, 1000); // Wait 1 second to allow location to be acquired
+    {% endif %}
   });
 </script>
 {% endblock custom_js %}

@@ -299,7 +299,16 @@ def student_view_result(request):
 
 def student_scan_qr(request):
     """View for camera-based QR code scanning"""
-    return render(request, 'student_template/student_scan_qr.html')
+    # Check if there's a token in the session from external QR code scan
+    attendance_token = request.session.get('attendance_token')
+
+    context = {}
+    if attendance_token:
+        context['attendance_token'] = attendance_token
+        # Clear the token from session to prevent reuse
+        del request.session['attendance_token']
+
+    return render(request, 'student_template/student_scan_qr.html', context)
 
 
 @csrf_exempt
