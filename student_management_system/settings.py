@@ -19,6 +19,7 @@ ALLOWED_HOSTS = ['*']
 
 # Application definition
 
+# Add 'chatbot' to INSTALLED_APPS
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -28,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'student_management_app',
+    'chatbot',
 ]
 
 MIDDLEWARE = [

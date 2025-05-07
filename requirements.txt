@@ -8,6 +8,7 @@ django-extensions==3.0.2
 # Database connectors
 mysql-connector-python==8.0.20
 protobuf==3.12.2
+mysqlclient==2.1.1  # For PythonAnywhere MySQL support
 
 # Excel handling
 openpyxl==3.1.2
@@ -27,9 +28,17 @@ graphviz==0.14
 pydot==1.4.1
 pyparsing==2.4.7
 
-# Computer vision
-opencv-python==4.8.0.76
+# Computer vision (headless version for PythonAnywhere)
+opencv-python-headless==4.8.0.76  # Use headless version for PythonAnywhere
 numpy==1.24.3
 
 # Utilities
 six==1.15.0
+python-dateutil==2.8.2
+
+# Deployment requirements
+gunicorn==20.1.0  # WSGI HTTP Server
+whitenoise==6.4.0  # Static files serving
+
+# Security
+django-secure==1.0.1
