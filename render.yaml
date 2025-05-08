@@ -2,8 +2,8 @@ services:
   - type: web
     name: student-attendance-system
     env: python
-    buildCommand: "chmod +x build.sh && ./build.sh"
-    startCommand: "gunicorn student_management_system.wsgi:application"
+    buildCommand: "chmod +x build.sh && chmod +x start.sh && ./build.sh"
+    startCommand: "./start.sh"
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
