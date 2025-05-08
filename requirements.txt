@@ -24,5 +24,5 @@ gunicorn==21.2.0  # WSGI HTTP Server
 whitenoise==6.5.0  # Static files serving
 
 # Database for Render
-dj-database-url==2.1.0
+dj-database-url==0.5.0  # Compatible with Django 3.0.7
 psycopg2-binary==2.9.9  # PostgreSQL adapter

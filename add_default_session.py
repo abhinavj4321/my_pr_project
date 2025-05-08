@@ -3,7 +3,8 @@ import django
 import datetime
 
 # Set up Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'student_management_system.settings')
+settings_module = os.environ.get('DJANGO_SETTINGS_MODULE', 'student_management_system.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
 django.setup()
 
 # Now we can import Django models
@@ -46,4 +47,4 @@ if __name__ == "__main__":
     print("Setting up default data...")
     create_default_session_year()
     create_default_course()
-    print("Setup complete.") 
+    print("Setup complete.")

@@ -2,7 +2,7 @@ services:
   - type: web
     name: student-attendance-system
     env: python
-    buildCommand: "./build.sh"
+    buildCommand: "chmod +x build.sh && ./build.sh"
     startCommand: "gunicorn student_management_system.wsgi:application"
     envVars:
       - key: PYTHON_VERSION
@@ -17,8 +17,10 @@ services:
         value: student_management_system.settings_production
       - key: WEB_CONCURRENCY
         value: 4
+    autoDeploy: true
 
 databases:
   - name: student_attendance_db
+    plan: free
     databaseName: student_attendance
     user: student_attendance_user
