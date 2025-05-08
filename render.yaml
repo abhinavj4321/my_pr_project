@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: student-attendance-system
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn student_management_system.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: student_attendance_db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: student_management_system.settings_production
+      - key: WEB_CONCURRENCY
+        value: 4
+
+databases:
+  - name: student_attendance_db
+    databaseName: student_attendance
+    user: student_attendance_user

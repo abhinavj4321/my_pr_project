@@ -8,6 +8,7 @@ __pycache__/
 *.pot
 local_settings.py
 media/temp/
+staticfiles/
 
 # Large files
 media/*.exe
@@ -25,7 +26,7 @@ media/*.tar.gz
 
 # Database
 # Uncomment if you want to include the database in your repository
-# db.sqlite3
+db.sqlite3
 
 # Distribution / packaging
 dist/
@@ -36,6 +37,7 @@ build/
 venv/
 env/
 ENV/
+.env
 
 # IDE specific files
 .idea/
@@ -46,3 +48,6 @@ ENV/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Render specific
+.render-buildpacks.json

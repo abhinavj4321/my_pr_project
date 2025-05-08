@@ -13,7 +13,7 @@ qrcode==7.4.2
 pillow==9.5.0
 
 # Computer vision
-opencv-python-headless==4.8.0.76  # Use headless version for PythonAnywhere
+opencv-python-headless==4.8.0.76
 numpy==1.24.3
 
 # Geolocation
@@ -23,5 +23,6 @@ geopy==2.3.0
 gunicorn==21.2.0  # WSGI HTTP Server
 whitenoise==6.5.0  # Static files serving
 
-# Database for PythonAnywhere
-mysqlclient==2.1.1
+# Database for Render
+dj-database-url==2.1.0
+psycopg2-binary==2.9.9  # PostgreSQL adapter
