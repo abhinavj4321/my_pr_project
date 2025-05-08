@@ -38,13 +38,13 @@
       <h4 style="margin-left: 10px; margin-top: 5px;">Student Management System | Student Dashboard</h4>
 
       <ul class="navbar-nav ml-auto">
-      
+
       <li class="nav-item dropdown">
         <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
           <i class="fas fa-cog"></i>
         </a>
         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" style="left: inherit; right: 0px;">
-          
+
           <a href="{% url 'student_profile' %}" class="dropdown-item">
             <i class="fas fa-user-edit mr-2"></i> Update Profile
           </a>
@@ -87,7 +87,7 @@
     </div>
     {% include 'student_template/footer.html' %}
 
-    
+
   </div>
 
 
@@ -110,9 +110,6 @@
 <script src="{% static 'dist/js/adminlte.js'  %}"></script>
 <script src="{% static 'dist/js/pages/dashboard.js'  %}"></script>
 <script src="{% static 'dist/js/demo.js'  %}"></script>
-
-<!-- Add before closing body tag -->
-<script src="{% static 'js/chatbot.js' %}"></script>
 
 {% block custom_js %}
 {% endblock custom_js %}
