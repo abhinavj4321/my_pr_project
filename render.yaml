@@ -3,7 +3,7 @@ services:
     name: student-attendance-system
     env: python
     buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input --clear && python manage.py migrate"
-    startCommand: "gunicorn student_management_system.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.4
