@@ -509,13 +509,10 @@
             console.log('QR data is not a URL, treating as token:', qrData);
         }
 
-        // Get network SSID from user for verification
-        const networkSSID = prompt("Please enter your WiFi network name (SSID) for network verification:");
-
         $('#scan-error-message').hide();
         $('#scan-success-message').html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing QR code...').show();
 
-        // Send scanned QR data to server
+        // Send scanned QR data to server (IP-based network verification only)
         $.ajax({
             url: '{% url "student_process_qr_scan" %}',
             type: 'POST',
@@ -524,7 +521,7 @@
                 'token': token,
                 'latitude': currentPosition ? currentPosition.lat : null,
                 'longitude': currentPosition ? currentPosition.lng : null,
-                'network_ssid': networkSSID ? networkSSID.trim() : null
+                'network_ssid': null  // IP-based verification only
             }),
             headers: {
                 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()

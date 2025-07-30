@@ -15,6 +15,7 @@ import qrcode
 import os
 from io import BytesIO
 from django.core.files.base import ContentFile
+from django.core.cache import cache
 
 # Try to import pandas, but handle the case where it's not installed
 try:
@@ -27,7 +28,7 @@ from student_management_app.models import (
     CustomUser, Staffs, Courses, Subjects, Students,
     SessionYearModel, Attendance, AttendanceReport, StudentResult, AttendanceQRCode
 )
-from .utils import get_client_ip
+from .utils import get_client_ip, verify_network_connectivity
 from .utils import export_attendance_to_excel
 
 def staff_generate_qr(request):
@@ -43,7 +44,7 @@ def staff_generate_qr(request):
 
         # Get teacher's network information
         teacher_ip = get_client_ip(request)
-        teacher_ssid = request.POST.get('network_ssid')  # Will be sent from frontend
+        enable_network_verification = request.POST.get('enable_network_verification', False)
 
         print(f"Parsed data - Subject: {subject_id}, Session: {session_year_id}, Expiry: {expiry_minutes}")  # Debug
 
@@ -85,11 +86,20 @@ def staff_generate_qr(request):
                 token=unique_token,
                 teacher_latitude=float(teacher_latitude) if teacher_latitude else None,
                 teacher_longitude=float(teacher_longitude) if teacher_longitude else None,
-                allowed_radius=float(allowed_radius),
-                teacher_ip_address=teacher_ip,
-                teacher_network_ssid=teacher_ssid,
-                require_same_network=True  # Enable network verification by default
+                allowed_radius=float(allowed_radius)
             )
+
+            # Store network information in cache using the token as key
+            # This will expire when the QR code expires
+            if enable_network_verification:
+                network_info = {
+                    'teacher_ip': teacher_ip,
+                    'teacher_ssid': None,  # IP-based verification only
+                    'require_network_verification': True
+                }
+                cache_key = f"qr_network_{unique_token}"
+                cache.set(cache_key, network_info, timeout=int(expiry_minutes) * 60)  # Cache for same duration as QR code
+                print(f"Stored network info in cache: {network_info}")  # Debug
             print("QR code instance created")  # Debug
 
             # Network verification removed

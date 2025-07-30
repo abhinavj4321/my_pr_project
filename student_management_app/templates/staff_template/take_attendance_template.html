@@ -117,21 +117,6 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
 
               <!-- Network Verification Settings -->
               <div class="form-group">
-                <label>Network SSID (WiFi Name)</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="network_ssid"
-                  name="network_ssid"
-                  placeholder="Enter your WiFi network name (optional)"
-                />
-                <small class="form-text text-muted">
-                  Students must be connected to the same WiFi network to mark attendance.
-                  Leave empty to use IP-based verification only.
-                </small>
-              </div>
-
-              <div class="form-group">
                 <div class="custom-control custom-switch">
                   <input
                     type="checkbox"
@@ -140,11 +125,11 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                     checked
                   />
                   <label class="custom-control-label" for="enableNetwork"
-                    >Enable Network Verification</label
+                    >Enable Network Verification (IP-based)</label
                   >
                 </div>
                 <small class="form-text text-muted">
-                  Requires students to be on the same network as you.
+                  Requires students to be on the same network as you. Uses IP address verification.
                 </small>
               </div>
             </form>
@@ -408,7 +393,6 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
       var radius = $("#radius").val();
       var enableLocation = $("#enableLocation").is(":checked");
       var enableNetwork = $("#enableNetwork").is(":checked");
-      var networkSSID = $("#network_ssid").val();
 
       if (!subject || !session_year || !expiry_time) {
         alert("Please select a subject, session year, and enter expiry time.");
@@ -423,12 +407,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         return;
       }
 
-      // Check if network verification is enabled but no SSID provided
-      if (enableNetwork && !networkSSID) {
-        if (!confirm("Network verification is enabled but no WiFi name provided. Continue with IP-based verification only?")) {
-          return;
-        }
-      }
+      // Network verification will be IP-based only
 
       // Network verification removed
 
@@ -446,9 +425,9 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         requestData.radius = radius;
       }
 
-      // Add network data if enabled
+      // Add network verification flag
       if (enableNetwork) {
-        requestData.network_ssid = networkSSID || null;
+        requestData.enable_network_verification = true;
       }
 
       // Network verification removed
@@ -466,8 +445,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
               : "<p><i class='fas fa-map-marker-alt text-muted'></i> Location verification is disabled.</p>";
 
             var networkInfo = enableNetwork
-              ? "<p><i class='fas fa-wifi'></i> Network verification is enabled. Students must be on the same network" +
-                (networkSSID ? " (" + networkSSID + ")" : " (IP-based)") + ".</p>"
+              ? "<p><i class='fas fa-wifi'></i> Network verification is enabled (IP-based). Students must be on the same network.</p>"
               : "<p><i class='fas fa-wifi text-muted'></i> Network verification is disabled.</p>";
 
             var code_html =

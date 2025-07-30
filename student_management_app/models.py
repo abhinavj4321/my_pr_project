@@ -89,10 +89,7 @@ class AttendanceQRCode(models.Model):
     teacher_latitude = models.FloatField(null=True, blank=True)
     teacher_longitude = models.FloatField(null=True, blank=True)
     allowed_radius = models.FloatField(default=100)  # Radius in meters
-    # Network verification fields
-    teacher_ip_address = models.GenericIPAddressField(null=True, blank=True)  # Teacher's IP address
-    teacher_network_ssid = models.CharField(max_length=100, null=True, blank=True)  # WiFi network name
-    require_same_network = models.BooleanField(default=True)  # Whether to enforce network verification
+    # Network verification is handled via cache to avoid database changes
 
 # ✅ Attendance Report Model
 class AttendanceReport(models.Model):
@@ -104,12 +101,7 @@ class AttendanceReport(models.Model):
     student_longitude = models.FloatField(null=True, blank=True)
     student_accuracy = models.FloatField(null=True, blank=True)  # Location accuracy in meters
     location_verified = models.BooleanField(default=False)
-    verification_details = models.JSONField(null=True, blank=True)  # Store detailed verification results
-    # Network verification fields
-    student_ip_address = models.GenericIPAddressField(null=True, blank=True)  # Student's IP address
-    student_network_ssid = models.CharField(max_length=100, null=True, blank=True)  # Student's WiFi network
-    network_verified = models.BooleanField(default=False)  # Whether network verification passed
-    network_verification_details = models.JSONField(null=True, blank=True)  # Store detailed network verification results
+    verification_details = models.JSONField(null=True, blank=True)  # Store detailed verification results (including network)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     objects = models.Manager()

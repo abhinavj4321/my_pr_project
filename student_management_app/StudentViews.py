@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage, default_storage
 from django.urls import reverse
 from django.utils.timezone import now
+from django.core.cache import cache
 import datetime
 import os
 # OpenCV is optional for deployment
@@ -478,26 +479,33 @@ def student_process_qr_scan(request):
                         # No location verification required
                         location_verified = True  # Allow attendance without location verification
 
-                # Network verification
+                # Network verification using cached data
                 network_verified = False
                 network_verification_details = None
                 student_ip = get_client_ip(request)
 
-                if qr_code.require_same_network:
+                # Get network information from cache
+                cache_key = f"qr_network_{token}"
+                network_info = cache.get(cache_key)
+
+                if network_info and network_info.get('require_network_verification'):
+                    teacher_ip = network_info.get('teacher_ip')
+                    teacher_ssid = network_info.get('teacher_ssid')
+
                     # Perform network verification
                     network_verification_result = verify_network_connectivity(
                         student_ip=student_ip,
-                        teacher_ip=qr_code.teacher_ip_address,
+                        teacher_ip=teacher_ip,
                         student_ssid=student_ssid,
-                        teacher_ssid=qr_code.teacher_network_ssid
+                        teacher_ssid=teacher_ssid
                     )
 
                     network_verified = network_verification_result['is_same_network']
                     network_verification_details = {
                         'student_ip': student_ip,
-                        'teacher_ip': qr_code.teacher_ip_address,
+                        'teacher_ip': teacher_ip,
                         'student_ssid': student_ssid,
-                        'teacher_ssid': qr_code.teacher_network_ssid,
+                        'teacher_ssid': teacher_ssid,
                         'ip_match': network_verification_result['ip_match'],
                         'ssid_match': network_verification_result['ssid_match'],
                         'verification_method': network_verification_result['verification_method']
@@ -510,7 +518,7 @@ def student_process_qr_scan(request):
                             'network_details': network_verification_details
                         })
                 else:
-                    # Network verification not required
+                    # Network verification not required or no network info available
                     network_verified = True
 
                 # Create attendance report with enhanced location details
@@ -526,7 +534,13 @@ def student_process_qr_scan(request):
                         'is_reliable': bool(location_details['is_reliable'])
                     }
 
-                # Create attendance report with network verification details
+                # Create attendance report with available fields
+                # Store network verification details in the existing verification_details field
+                combined_verification_details = json_location_details or {}
+                if network_verification_details:
+                    combined_verification_details['network'] = network_verification_details
+                    combined_verification_details['network_verified'] = network_verified
+
                 attendance_report = AttendanceReport(
                     student_id=student,
                     attendance_id=attendance,
@@ -535,11 +549,7 @@ def student_process_qr_scan(request):
                     student_longitude=student_lon if longitude else None,
                     student_accuracy=float(student_accuracy) if student_accuracy else None,
                     location_verified=bool(location_verified),
-                    verification_details=json_location_details,
-                    student_ip_address=student_ip,
-                    student_network_ssid=student_ssid,
-                    network_verified=bool(network_verified),
-                    network_verification_details=network_verification_details
+                    verification_details=combined_verification_details
                 )
 
                 attendance_report.save()

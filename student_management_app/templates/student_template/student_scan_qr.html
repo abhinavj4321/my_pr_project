@@ -509,14 +509,6 @@ QR Code {% endblock page_title %} {% block custom_css %}
       }
     }
 
-    // Function to get network SSID from user
-    function getNetworkSSID() {
-      // Since browsers cannot directly access WiFi SSID for security reasons,
-      // we need to ask the user to provide it
-      const ssid = prompt("Please enter your WiFi network name (SSID) for network verification:");
-      return ssid ? ssid.trim() : null;
-    }
-
     // Process the QR code data
     function processQRCode(qrData) {
       // Extract token from QR data URL
@@ -532,9 +524,6 @@ QR Code {% endblock page_title %} {% block custom_css %}
         console.log('QR data is not a URL, treating as token:', qrData);
       }
 
-      // Get network SSID from user
-      networkData.ssid = getNetworkSSID();
-
       // Show processing message
       $("#error-message").hide();
       $("#success-message")
@@ -543,13 +532,13 @@ QR Code {% endblock page_title %} {% block custom_css %}
         )
         .show();
 
-      // Prepare data to send to server
+      // Prepare data to send to server (IP-based network verification only)
       const data = {
         token: token,
         latitude: locationData.latitude || null,
         longitude: locationData.longitude || null,
         accuracy: locationData.accuracy || null,
-        network_ssid: networkData.ssid || null, // Include network SSID
+        network_ssid: null, // IP-based verification only
       };
 
       // Send data to server
