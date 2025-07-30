@@ -8,119 +8,148 @@
 
 {% load static %}
 
-<section class="content">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-info">
-                    <div class="inner">
-                        <h3>{{ total_attendance }}</h3>
-                        <p>Total Attendance</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <a href="{% url 'student_view_attendance' %}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-danger">
-                    <div class="inner">
-                        <h3>{{ attendance_absent }}</h3>
-                        <p>Absent</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-user-times"></i>
-                    </div>
-                    <a href="{% url 'student_view_attendance' %}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-success">
-                    <div class="inner">
-                        <h3>{{ attendance_present }}</h3>
-                        <p>Present</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <a href="{% url 'student_view_attendance' %}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-primary">
-                    <div class="inner">
-                        <h3>{{ total_subjects }}</h3>
-                        <p>Total Subjects</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
-        </div>
+<!-- Welcome Section -->
+<div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 mb-8 text-white">
+    <h1 class="text-2xl font-bold mb-2">Welcome back, {{ request.user.first_name }}!</h1>
+    <p class="text-blue-100">Here's your attendance overview and quick actions.</p>
+</div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card card-primary">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="fas fa-chart-pie mr-2"></i>
-                            Attendance Overview
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="pieChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-                    </div>
-                </div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Attendance -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Attendance</p>
+                <p class="text-3xl font-bold text-blue-600">{{ total_attendance }}</p>
             </div>
-            <div class="col-md-6">
-                <div class="card card-info">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="fas fa-chart-bar mr-2"></i>
-                            Subject-wise Attendance
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="barChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-                    </div>
-                </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
             </div>
         </div>
+        <div class="mt-4">
+            <a href="{% url 'student_view_attendance' %}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                View Details <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+    </div>
 
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-warning">
-                        <h3 class="card-title">
-                            <i class="fas fa-qrcode mr-2"></i>
-                            Quick Actions
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-4">
-                                <a href="{% url 'student_upload_qr' %}" class="btn btn-lg btn-success btn-block">
-                                    <i class="fas fa-qrcode mr-2"></i> QR Attendance
-                                </a>
-                            </div>
-                            <div class="col-md-4">
-                                <a href="{% url 'student_view_attendance' %}" class="btn btn-lg btn-info btn-block">
-                                    <i class="fas fa-calendar-alt mr-2"></i> View Attendance
-                                </a>
-                            </div>
-                            <div class="col-md-4">
-                                <a href="{% url 'student_profile' %}" class="btn btn-lg btn-primary btn-block">
-                                    <i class="fas fa-user-circle mr-2"></i> My Profile
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Absent Days -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Absent</p>
+                <p class="text-3xl font-bold text-red-600">{{ attendance_absent }}</p>
+            </div>
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-times text-red-600 text-xl"></i>
             </div>
         </div>
+        <div class="mt-4">
+            <a href="{% url 'student_view_attendance' %}" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                View Details <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Present Days -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Present</p>
+                <p class="text-3xl font-bold text-green-600">{{ attendance_present }}</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-check text-green-600 text-xl"></i>
+            </div>
+        </div>
+        <div class="mt-4">
+            <a href="{% url 'student_view_attendance' %}" class="text-sm text-green-600 hover:text-green-800 font-medium">
+                View Details <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Total Subjects -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Subjects</p>
+                <p class="text-3xl font-bold text-purple-600">{{ total_subjects }}</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-book text-purple-600 text-xl"></i>
+            </div>
+        </div>
+        <div class="mt-4">
+            <span class="text-sm text-gray-500">Enrolled courses</span>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Attendance Overview Chart -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center mb-4">
+            <i class="fas fa-chart-pie text-blue-600 mr-3"></i>
+            <h3 class="text-lg font-semibold text-gray-900">Attendance Overview</h3>
+        </div>
+        <div class="h-64">
+            <canvas id="pieChart" class="w-full h-full"></canvas>
+        </div>
+    </div>
+
+    <!-- Subject-wise Attendance Chart -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center mb-4">
+            <i class="fas fa-chart-bar text-green-600 mr-3"></i>
+            <h3 class="text-lg font-semibold text-gray-900">Subject-wise Attendance</h3>
+        </div>
+        <div class="h-64">
+            <canvas id="barChart" class="w-full h-full"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center mb-6">
+        <i class="fas fa-bolt text-yellow-600 mr-3"></i>
+        <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- QR Attendance -->
+        <a href="{% url 'student_upload_qr' %}"
+           class="flex flex-col items-center p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors group">
+            <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-3 group-hover:bg-green-600 transition-colors">
+                <i class="fas fa-qrcode text-white text-xl"></i>
+            </div>
+            <h4 class="font-semibold text-gray-900 mb-1">QR Attendance</h4>
+            <p class="text-sm text-gray-600 text-center">Scan QR code to mark attendance</p>
+        </a>
+
+        <!-- View Attendance -->
+        <a href="{% url 'student_view_attendance' %}"
+           class="flex flex-col items-center p-6 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors group">
+            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-600 transition-colors">
+                <i class="fas fa-calendar-alt text-white text-xl"></i>
+            </div>
+            <h4 class="font-semibold text-gray-900 mb-1">View Attendance</h4>
+            <p class="text-sm text-gray-600 text-center">Check your attendance records</p>
+        </a>
+
+        <!-- My Profile -->
+        <a href="{% url 'student_profile' %}"
+           class="flex flex-col items-center p-6 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors group">
+            <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-3 group-hover:bg-purple-600 transition-colors">
+                <i class="fas fa-user-circle text-white text-xl"></i>
+            </div>
+            <h4 class="font-semibold text-gray-900 mb-1">My Profile</h4>
+            <p class="text-sm text-gray-600 text-center">Update your profile information</p>
+        </a>
+    </div>
+</div>
     </div>
 </section>
 

@@ -1,149 +1,113 @@
 {% load static %}
 
-<aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <!-- Brand Logo -->
-    <a href="{% url 'student_home' %}" class="brand-link">
-      <img src="{% static 'dist/img/AdminLTELogo.png' %}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
-           style="opacity: .8">
-      <span class="brand-text font-weight-light">Student Management</span>
-    </a>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <!-- Sidebar user panel (optional) -->
-      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-        <div class="image">
-          <img src="{% static 'dist/img/user2-160x160.jpg' %}" class="img-circle elevation-2" alt="User Image">
-        </div>
-        <div class="info">
-          <a href="#" class="d-block">{{ user.first_name }} {{ user.last_name }}</a>
-        </div>
+<!-- Modern Sidebar -->
+<aside class="w-64 bg-gray-900 text-white min-h-screen fixed left-0 top-0 z-40 transform transition-transform duration-300 ease-in-out lg:translate-x-0">
+  <!-- Brand Logo -->
+  <div class="flex items-center justify-center h-16 bg-gray-800 border-b border-gray-700">
+    <a href="{% url 'student_home' %}" class="flex items-center space-x-3">
+      <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+        <i class="fas fa-graduation-cap text-white"></i>
       </div>
+      <span class="text-lg font-semibold">Student Portal</span>
+    </a>
+  </div>
 
-      <!-- Sidebar Menu -->
-      <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-          <!-- Add icons to the links using the .nav-icon class
-               with font-awesome or any other icon font library -->
-          <li class="nav-item">
-            <a href="{% url 'student_home' %}" class="nav-link {% if request.path == '/student/home/' %} active {% endif %}">
-              <i class="nav-icon fas fa-th"></i>
-              <p>
-                Home
-              </p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'student_view_attendance' %}" class="nav-link {% if request.path == '/student/view-attendance/' %} active {% endif %}">
-              <i class="nav-icon fas fa-calendar-alt"></i>
-              <p>
-                View Attendance
-              </p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'student_upload_qr' %}" class="nav-link {% if request.path == '/student/upload-qr/' or request.path == '/student/scan-qr/' %} active {% endif %}">
-              <i class="nav-icon fas fa-qrcode"></i>
-              <p>
-                QR Code Attendance
-              </p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'student_export_attendance' %}" class="nav-link {% if request.path == '/student/export-attendance/' %} active {% endif %}">
-              <i class="nav-icon fas fa-file-excel"></i>
-              <p>
-                Export Attendance
-              </p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'student_view_result' %}" class="nav-link {% if request.path == '/student/view-result/' %} active {% endif %}">
-              <i class="nav-icon fas fa-tasks"></i>
-              <p>
-                View Result
-              </p>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      <!-- /.sidebar-menu -->
+  <!-- User Panel -->
+  <div class="p-4 border-b border-gray-700">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+        <i class="fas fa-user text-white"></i>
+      </div>
+      <div>
+        <p class="font-medium">{{ user.first_name }} {{ user.last_name }}</p>
+        <p class="text-sm text-gray-400">Student</p>
+      </div>
     </div>
-    <!-- /.sidebar -->
-  </aside>
+  </div>
 
-<style>
-    /* Sidebar Container */
-    .sidebar-dark-primary {
-        background-color: #343a40;
-        height: 100vh;
-        color: white;
-        position: fixed;
-        width: 250px;
+  <!-- Navigation Menu -->
+  <nav class="mt-4 px-4">
+    <div class="space-y-2">
+      <!-- Home -->
+      <a href="{% url 'student_home' %}"
+         class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/student_home/' %}bg-blue-600 text-white{% endif %}">
+        <i class="fas fa-home w-5"></i>
+        <span>Home</span>
+      </a>
+
+      <!-- View Attendance -->
+      <a href="{% url 'student_view_attendance' %}"
+         class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/student_view_attendance/' %}bg-blue-600 text-white{% endif %}">
+        <i class="fas fa-calendar-alt w-5"></i>
+        <span>View Attendance</span>
+      </a>
+
+      <!-- QR Code Attendance -->
+      <a href="{% url 'student_upload_qr' %}"
+         class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/student_upload_qr/' or request.path == '/student_scan_qr/' %}bg-blue-600 text-white{% endif %}">
+        <i class="fas fa-qrcode w-5"></i>
+        <span>QR Attendance</span>
+      </a>
+      <!-- Export Attendance -->
+      <a href="{% url 'student_export_attendance' %}"
+         class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/student_export_attendance/' %}bg-blue-600 text-white{% endif %}">
+        <i class="fas fa-file-excel w-5"></i>
+        <span>Export Attendance</span>
+      </a>
+
+      <!-- View Result -->
+      <a href="{% url 'student_view_result' %}"
+         class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/student_view_result/' %}bg-blue-600 text-white{% endif %}">
+        <i class="fas fa-tasks w-5"></i>
+        <span>View Result</span>
+      </a>
+
+      <!-- Profile -->
+      <a href="{% url 'student_profile' %}"
+         class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/student_profile/' %}bg-blue-600 text-white{% endif %}">
+        <i class="fas fa-user-circle w-5"></i>
+        <span>My Profile</span>
+      </a>
+
+      <!-- Logout -->
+      <a href="{% url 'logout_user' %}"
+         class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-colors">
+        <i class="fas fa-sign-out-alt w-5"></i>
+        <span>Logout</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- Mobile menu button (hidden on desktop) -->
+<div class="lg:hidden fixed top-4 left-4 z-50">
+  <button id="mobile-menu-button" class="bg-gray-800 text-white p-2 rounded-lg">
+    <i class="fas fa-bars"></i>
+  </button>
+</div>
+
+<!-- Overlay for mobile -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
+
+<script>
+  // Mobile menu toggle
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const sidebar = document.querySelector('aside');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    if (mobileMenuButton) {
+      mobileMenuButton.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+      });
     }
 
-    /* Sidebar Brand */
-    .brand-link {
-        background-color: #222d32;
-        padding: 15px;
-        text-align: center;
-        color: white;
-        display: block;
+    if (overlay) {
+      overlay.addEventListener('click', function() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      });
     }
-
-    .brand-text {
-        font-size: 1.25rem;
-        font-weight: bold;
-    }
-
-    /* User Panel */
-    .user-panel {
-        padding: 10px 15px;
-        background-color: #3c8dbc;
-    }
-
-    .info a {
-        color: white;
-        font-size: 1rem;
-        text-decoration: none;
-    }
-
-    .info a:hover {
-        color: #ffcc00;
-    }
-
-    /* Nav Menu */
-    .nav-pills {
-        list-style: none;
-        padding-left: 0;
-        margin-top: 20px;
-    }
-
-    .nav-item {
-        width: 100%;
-    }
-
-    .nav-link {
-        display: flex;
-        align-items: center;
-        padding: 12px 20px;
-        color: white;
-        text-decoration: none;
-        font-size: 1rem;
-        border-left: 4px solid transparent;
-        transition: all 0.3s ease;
-    }
-
-    .nav-link:hover {
-        background-color: #495057;
-    }
-
-    .nav-link.active {
-        background-color: #007bff;
-        border-left: 4px solid #0056b3;
-    }
-
-    .nav-icon {
-        margin-right: 10px;
-    }
-</style>
+  });
+</script>
