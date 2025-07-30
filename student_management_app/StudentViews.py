@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, FileResponse
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage, default_storage
 from django.urls import reverse
 from django.utils.timezone import now
@@ -17,6 +18,7 @@ from student_management_app.models import (
     CustomUser, Staffs, Courses, Subjects, Students,
     Attendance, AttendanceReport, StudentResult, SessionYearModel
 )
+from .utils import get_client_ip, verify_network_connectivity
 from .models import AttendanceQRCode
 from .utils import is_within_radius, export_attendance_to_excel
 
@@ -76,30 +78,60 @@ def student_upload_qr(request):
 
             # Open and process the QR code image
             try:
-                from pyzbar.pyzbar import decode
-                from PIL import Image
                 import datetime
                 from django.utils.timezone import now
+                import tempfile
+                import os
 
-                # Open the image using PIL
-                img = Image.open(qr_image)
+                token = None
 
-                # Decode the QR code
-                decoded_objects = decode(img)
+                # Try pyzbar first
+                try:
+                    from pyzbar.pyzbar import decode
+                    from PIL import Image
 
-                if not decoded_objects:
-                    return JsonResponse({'status': 'error', 'message': 'No QR code found in the image'})
+                    # Open the image using PIL
+                    img = Image.open(qr_image)
 
-                # Get the QR code data (token)
-                token = decoded_objects[0].data.decode('utf-8')
+                    # Decode the QR code
+                    decoded_objects = decode(img)
+
+                    if decoded_objects:
+                        # Get the QR code data (token)
+                        token = decoded_objects[0].data.decode('utf-8')
+                except Exception as pyzbar_error:
+                    print(f"Pyzbar failed: {pyzbar_error}")
+
+                # If pyzbar failed, try OpenCV as fallback
+                if not token:
+                    try:
+                        # Save uploaded file temporarily
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
+                            for chunk in qr_image.chunks():
+                                temp_file.write(chunk)
+                            temp_file_path = temp_file.name
+
+                        # Use OpenCV to decode
+                        token = decode_qr_code(temp_file_path)
+
+                        # Clean up temp file
+                        os.unlink(temp_file_path)
+                    except Exception as opencv_error:
+                        print(f"OpenCV failed: {opencv_error}")
+
+                if not token:
+                    return JsonResponse({'status': 'error', 'message': 'No QR code found in the image or unable to decode'})
 
                 # Find the corresponding QR code record in the database
                 try:
-                    qr_code = AttendanceQRCode.objects.get(token=token)
+                    qr_code = AttendanceQRCode.objects.filter(
+                        token=token,
+                        is_active=True,
+                        expiry_time__gte=now()
+                    ).first()
 
-                    # Check if the QR code has expired
-                    if qr_code.expiry_time < now():
-                        return JsonResponse({'status': 'error', 'message': 'QR code has expired'})
+                    if not qr_code:
+                        return JsonResponse({'status': 'error', 'message': 'QR code has expired or is invalid'})
 
                     # Get the student object
                     student = Students.objects.get(admin=request.user.id)
@@ -158,6 +190,38 @@ def student_upload_qr(request):
                                 'message': 'You are not within the allowed radius for attendance'
                             })
 
+                    # Verify network connectivity if required
+                    network_verified = False
+                    network_verification_details = None
+                    # Check if network verification is required (field might not exist yet)
+                    require_network = getattr(qr_code, 'require_same_network', False)
+                    if require_network:
+                        student_ip = get_client_ip(request)
+
+                        teacher_ip = getattr(qr_code, 'teacher_ip_address', None)
+                        teacher_ssid = getattr(qr_code, 'teacher_network_ssid', None)
+                        if teacher_ip and student_ip:
+                            network_verification = verify_network_connectivity(
+                                student_ip=student_ip,
+                                teacher_ip=teacher_ip,
+                                student_ssid=None,  # WiFi SSID detection requires client-side JS
+                                teacher_ssid=teacher_ssid
+                            )
+
+                            network_verified = network_verification['is_same_network']
+                            network_verification_details = network_verification
+
+                            if not network_verified:
+                                return JsonResponse({
+                                    'status': 'error',
+                                    'message': 'You must be connected to the same network as your teacher to mark attendance'
+                                })
+                        else:
+                            return JsonResponse({
+                                'status': 'error',
+                                'message': 'Network verification is required but network information is not available'
+                            })
+
                     # Create attendance report with proper data types
                     # Create a verification details dictionary if we have location data
                     verification_details = None
@@ -170,6 +234,16 @@ def student_upload_qr(request):
                             'is_reliable': bool(verification_result['is_reliable'])
                         }
 
+                    # Add network verification details if available
+                    if network_verification_details:
+                        if verification_details is None:
+                            verification_details = {}
+                        verification_details['network_verification'] = network_verification_details
+
+                    # Get student's IP for network verification
+                    student_ip = get_client_ip(request)
+
+                    # Create attendance report with basic fields
                     attendance_report = AttendanceReport(
                         student_id=student,
                         attendance_id=attendance,
@@ -179,6 +253,14 @@ def student_upload_qr(request):
                         location_verified=bool(location_verified),
                         verification_details=verification_details
                     )
+
+                    # Add network fields if they exist
+                    try:
+                        attendance_report.student_ip_address = student_ip
+                        attendance_report.network_verified = bool(network_verified)
+                    except AttributeError:
+                        # Network fields don't exist yet, skip them
+                        pass
                     attendance_report.save()
 
                     return JsonResponse({
@@ -186,8 +268,8 @@ def student_upload_qr(request):
                         'message': 'Attendance marked successfully'
                     })
 
-                except AttendanceQRCode.DoesNotExist:
-                    return JsonResponse({'status': 'error', 'message': 'Invalid QR code'})
+                except Exception as qr_error:
+                    return JsonResponse({'status': 'error', 'message': f'Error validating QR code: {str(qr_error)}'})
 
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': f'Error processing QR code: {str(e)}'})
@@ -312,10 +394,15 @@ def student_scan_qr(request):
 
 
 @csrf_exempt
+@login_required
 def student_process_qr_scan(request):
     """Process QR code data from camera scan"""
     if request.method == 'POST':
         try:
+            # Check if user is a student
+            if request.user.user_type != '3':
+                return JsonResponse({'status': 'error', 'message': 'Access denied. Students only.'})
+
             # Get the QR code data from the request
             data = json.loads(request.body)
             token = data.get('token')
@@ -378,7 +465,7 @@ def student_process_qr_scan(request):
                     allowed_radius = float(qr_code.allowed_radius)
 
                     # Get student location accuracy if available
-                    student_accuracy = request.data.get('accuracy', None)
+                    student_accuracy = data.get('accuracy', None)
 
                     # Check if student is within allowed radius with enhanced verification
                     verification_result = is_within_radius(
@@ -408,11 +495,49 @@ def student_process_qr_scan(request):
                             'location_details': location_details
                         })
                 else:
-                    # If location data is missing, we might want to reject the attendance
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': 'Location data is required to mark attendance. Please enable location services and try again.'
-                    })
+                    # If teacher's location is not set, location verification is not required
+                    if qr_code.teacher_latitude and qr_code.teacher_longitude:
+                        # Teacher has location but student doesn't - require location
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Location data is required to mark attendance. Please enable location services and try again.'
+                        })
+                    else:
+                        # No location verification required
+                        location_verified = True  # Allow attendance without location verification
+
+                # Verify network connectivity if required
+                network_verified = False
+                network_verification_details = None
+                # Check if network verification is required (field might not exist yet)
+                require_network = getattr(qr_code, 'require_same_network', False)
+                if require_network:
+                    student_ip = get_client_ip(request)
+                    teacher_ip = getattr(qr_code, 'teacher_ip_address', None)
+                    teacher_ssid = getattr(qr_code, 'teacher_network_ssid', None)
+
+                    if teacher_ip and student_ip:
+                        network_verification = verify_network_connectivity(
+                            student_ip=student_ip,
+                            teacher_ip=teacher_ip,
+                            student_ssid=None,  # WiFi SSID detection requires client-side JS
+                            teacher_ssid=teacher_ssid
+                        )
+
+                        network_verified = network_verification['is_same_network']
+                        network_verification_details = network_verification
+
+                        if not network_verified:
+                            return JsonResponse({
+                                'status': 'error',
+                                'message': 'You must be connected to the same network as your teacher to mark attendance',
+                                'network_details': network_verification_details
+                            })
+                    else:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Network verification is required but network information is not available'
+                        })
 
                 # Create attendance report with enhanced location details
                 # Convert location_details to a proper JSON-serializable format
@@ -427,6 +552,16 @@ def student_process_qr_scan(request):
                         'is_reliable': bool(location_details['is_reliable'])
                     }
 
+                # Add network verification details if available
+                if network_verification_details:
+                    if json_location_details is None:
+                        json_location_details = {}
+                    json_location_details['network_verification'] = network_verification_details
+
+                # Get student's IP for network verification
+                student_ip = get_client_ip(request)
+
+                # Create attendance report with basic fields
                 attendance_report = AttendanceReport(
                     student_id=student,
                     attendance_id=attendance,
@@ -437,6 +572,14 @@ def student_process_qr_scan(request):
                     location_verified=bool(location_verified),
                     verification_details=json_location_details
                 )
+
+                # Add network fields if they exist
+                try:
+                    attendance_report.student_ip_address = student_ip
+                    attendance_report.network_verified = bool(network_verified)
+                except AttributeError:
+                    # Network fields don't exist yet, skip them
+                    pass
                 attendance_report.save()
 
                 # Deactivate QR Code after successful attendance marking

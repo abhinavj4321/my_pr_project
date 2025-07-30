@@ -18,6 +18,7 @@ QR Code {% endblock page_title %} {% block custom_css %}
             </h3>
           </div>
           <div class="card-body">
+            {% csrf_token %}
             <div class="alert alert-info">
               <p>
                 <i class="fas fa-info-circle mr-2"></i>Please allow camera
@@ -504,16 +505,20 @@ QR Code {% endblock page_title %} {% block custom_css %}
 
     // Process the QR code data
     function processQRCode(qrData) {
-      // Check if location is available
-      if (!locationData.latitude || !locationData.longitude) {
-        $("#error-message")
-          .html(
-            '<i class="fas fa-exclamation-circle mr-2"></i>Location data is required. Please enable location services and try again.'
-          )
-          .show();
-        scanning = true;
-        requestAnimationFrame(tick);
-        return;
+      // Note: Location verification is now optional and handled by the server
+      // We'll send whatever location data we have (if any)
+
+      // Extract token from QR data URL
+      let token = qrData;
+      try {
+        const url = new URL(qrData);
+        const urlToken = url.searchParams.get('token');
+        if (urlToken) {
+          token = urlToken;
+        }
+      } catch (e) {
+        // If it's not a valid URL, assume it's already a token
+        console.log('QR data is not a URL, treating as token:', qrData);
       }
 
       // Show processing message
@@ -526,10 +531,10 @@ QR Code {% endblock page_title %} {% block custom_css %}
 
       // Prepare data to send to server
       const data = {
-        token: qrData,
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        accuracy: locationData.accuracy, // Include accuracy information
+        token: token,
+        latitude: locationData.latitude || null,
+        longitude: locationData.longitude || null,
+        accuracy: locationData.accuracy || null, // Include accuracy information
       };
 
       // Send data to server
@@ -538,6 +543,9 @@ QR Code {% endblock page_title %} {% block custom_css %}
         type: "POST",
         contentType: "application/json",
         data: JSON.stringify(data),
+        headers: {
+          'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
         success: function (response) {
           let successMessage =
             '<i class="fas fa-check-circle mr-2"></i>' +

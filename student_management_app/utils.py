@@ -108,6 +108,100 @@ def is_within_radius(student_lat, student_lon, teacher_lat, teacher_lon, radius,
         'original_radius': float(radius)
     }
 
+
+def get_client_ip(request):
+    """
+    Get the client's IP address from the request.
+    Handles cases where the request comes through proxies.
+    """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+def is_same_network(ip1, ip2, subnet_mask='255.255.255.0'):
+    """
+    Check if two IP addresses are on the same network.
+    Default subnet mask assumes a /24 network (255.255.255.0).
+
+    Parameters:
+    - ip1, ip2: IP addresses to compare
+    - subnet_mask: Network subnet mask (default: 255.255.255.0 for /24)
+
+    Returns:
+    - bool: True if IPs are on the same network, False otherwise
+    """
+    import ipaddress
+
+    try:
+        # Convert IPs to IPv4Address objects
+        addr1 = ipaddress.IPv4Address(ip1)
+        addr2 = ipaddress.IPv4Address(ip2)
+
+        # Create network from first IP with /24 subnet (most common for local networks)
+        network1 = ipaddress.IPv4Network(f"{ip1}/24", strict=False)
+
+        # Check if second IP is in the same network
+        return addr2 in network1
+
+    except (ipaddress.AddressValueError, ValueError) as e:
+        print(f"Error comparing networks: {e}")
+        return False
+
+
+def verify_network_connectivity(student_ip, teacher_ip, student_ssid=None, teacher_ssid=None):
+    """
+    Verify if student and teacher are on the same network.
+
+    Parameters:
+    - student_ip: Student's IP address
+    - teacher_ip: Teacher's IP address
+    - student_ssid: Student's WiFi network name (optional)
+    - teacher_ssid: Teacher's WiFi network name (optional)
+
+    Returns:
+    - dict: Network verification results
+    """
+    verification_result = {
+        'is_same_network': False,
+        'ip_match': False,
+        'ssid_match': False,
+        'verification_method': None,
+        'details': {}
+    }
+
+    # Check IP network match
+    if student_ip and teacher_ip:
+        ip_same_network = is_same_network(student_ip, teacher_ip)
+        verification_result['ip_match'] = ip_same_network
+        verification_result['details']['student_ip'] = student_ip
+        verification_result['details']['teacher_ip'] = teacher_ip
+
+        if ip_same_network:
+            verification_result['is_same_network'] = True
+            verification_result['verification_method'] = 'ip_network'
+
+    # Check SSID match (if available)
+    if student_ssid and teacher_ssid:
+        ssid_match = student_ssid.lower() == teacher_ssid.lower()
+        verification_result['ssid_match'] = ssid_match
+        verification_result['details']['student_ssid'] = student_ssid
+        verification_result['details']['teacher_ssid'] = teacher_ssid
+
+        if ssid_match:
+            verification_result['is_same_network'] = True
+            verification_result['verification_method'] = 'wifi_ssid'
+
+    # If both methods are available, require both to pass for higher security
+    if student_ssid and teacher_ssid and student_ip and teacher_ip:
+        verification_result['is_same_network'] = verification_result['ip_match'] and verification_result['ssid_match']
+        verification_result['verification_method'] = 'ip_and_ssid'
+
+    return verification_result
+
 def export_attendance_to_excel(attendance_data, subject_name=None, date_range=None, for_student=False):
     """
     Generate Excel file from attendance data

@@ -98,8 +98,11 @@ def add_staff_save(request):
 
         try:
             user = CustomUser.objects.create_user(username=username, password=password, email=email, first_name=first_name, last_name=last_name, user_type="2")
-            user.staffs.address = address
-            user.save()
+            # The Staffs record is automatically created by the signal handler
+            # Now we can safely access and update it
+            staff_record = Staffs.objects.get(admin=user)
+            staff_record.address = address
+            staff_record.save()
             messages.success(request, "Staff Added Successfully!")
             return redirect('add_staff')
         except Exception as e:
@@ -510,19 +513,27 @@ def add_subject_save(request):
         subject_name = request.POST.get('subject')
 
         course_id = request.POST.get('course')
-        course = Courses.objects.get(id=course_id)
-
         staff_id = request.POST.get('staff')
-        staff = Staffs.objects.get(admin__id=staff_id)  # ✅ Correct reference
 
+        try:
+            course = Courses.objects.get(id=course_id)
+        except Courses.DoesNotExist:
+            messages.error(request, "Selected course does not exist!")
+            return redirect('add_subject')
+
+        try:
+            staff = Staffs.objects.get(admin__id=staff_id)
+        except Staffs.DoesNotExist:
+            messages.error(request, "Selected staff does not have a staff profile. Please contact administrator.")
+            return redirect('add_subject')
 
         try:
             subject = Subjects(subject_name=subject_name, course_id=course, staff_id=staff)
             subject.save()
             messages.success(request, "Subject Added Successfully!")
             return redirect('add_subject')
-        except:
-            messages.error(request, "Failed to Add Subject!")
+        except Exception as e:
+            messages.error(request, f"Failed to Add Subject! Error: {str(e)}")
             return redirect('add_subject')
 
 
@@ -689,6 +700,35 @@ def admin_profile_update(request):
             messages.error(request, "Failed to Update Profile")
             return redirect('admin_profile')
 
+
+
+def fix_staff_records(request):
+    """
+    Temporary view to fix missing Staffs records
+    """
+    if not request.user.is_authenticated or request.user.user_type != '1':
+        messages.error(request, "Access denied!")
+        return redirect('admin_home')
+
+    # Get all staff users (user_type='2')
+    staff_users = CustomUser.objects.filter(user_type='2')
+    fixed_count = 0
+
+    for user in staff_users:
+        try:
+            # Try to get the corresponding Staffs record
+            staff_record = Staffs.objects.get(admin=user)
+        except Staffs.DoesNotExist:
+            # Create missing Staffs record
+            staff_record = Staffs.objects.create(admin=user, address="")
+            fixed_count += 1
+
+    if fixed_count > 0:
+        messages.success(request, f"Fixed {fixed_count} missing Staffs records!")
+    else:
+        messages.info(request, "All staff users already have corresponding Staffs records!")
+
+    return redirect('admin_home')
 
 
 def staff_profile(request):

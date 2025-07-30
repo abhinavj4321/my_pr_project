@@ -42,18 +42,10 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="{% url 'student_upload_qr' %}" class="nav-link {% if request.path == '/student/upload-qr/' %} active {% endif %}">
-              <i class="nav-icon fas fa-upload"></i>
+            <a href="{% url 'student_upload_qr' %}" class="nav-link {% if request.path == '/student/upload-qr/' or request.path == '/student/scan-qr/' %} active {% endif %}">
+              <i class="nav-icon fas fa-qrcode"></i>
               <p>
-                Upload QR Code
-              </p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'student_scan_qr' %}" class="nav-link {% if request.path == '/student/scan-qr/' %} active {% endif %}">
-              <i class="nav-icon fas fa-camera"></i>
-              <p>
-                Scan QR Code
+                QR Code Attendance
               </p>
             </a>
           </li>

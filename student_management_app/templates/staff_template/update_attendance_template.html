@@ -1,6 +1,5 @@
 {% extends 'staff_template/base_template.html' %} {% block page_title %} View
-Update Attendance {% endblock page_title %} {% block main_content %} {% load
-static %}
+Update Attendance {% endblock page_title %} {% block main_content %} {% load static %}
 
 <section class="content">
   <div class="container-fluid">
@@ -48,9 +47,7 @@ static %}
             <div class="form-group">
               <label>Subject</label>
               <select class="form-control" name="subject" id="subject">
-                {% for subject in subjects %}
-                <option value="{{ subject.id }}">
-                  {{ subject.subject_name }}
+                {% for subject in subjects %}<option value="{{ subject.id }}">{{ subject.subject_name }}
                 </option>
                 {% endfor %}
               </select>
@@ -62,11 +59,8 @@ static %}
                 class="form-control"
                 name="session_year_id"
                 id="session_year_id"
-              >
-                {% for session_year in session_years %}
-                <option value="{{ session_year.id }}">
-                  {{ session_year.session_start_year }} to {{
-                  session_year.session_end_year }}
+>
+                {% for session_year in session_years %}<option value="{{ session_year.id }}">{{ session_year.session_start_year }} to {{session_year.session_end_year }}
                 </option>
                 {% endfor %}
               </select>

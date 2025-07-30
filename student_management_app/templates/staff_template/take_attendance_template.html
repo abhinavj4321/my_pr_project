@@ -43,8 +43,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
               <div class="form-group">
                 <label>Subject</label>
                 <select class="form-control" name="subject" id="subject">
-                  {% for subject in subjects %}
-                  <option value="{{ subject.id }}" {% if selected_subject and selected_subject.id == subject.id %}selected{% endif %}>
+                  {% for subject in subjects %}<option value="{{ subject.id }}" {% if selected_subject and selected_subject.id == subject.id %}selected{% endif %}>
                     {{ subject.subject_name }}
                   </option>
                   {% endfor %}
@@ -59,10 +58,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                   name="session_year"
                   id="session_year"
                 >
-                  {% for session_year in session_years %}
-                  <option value="{{ session_year.id }}">
-                    {{ session_year.session_start_year }} to {{
-                    session_year.session_end_year }}
+                  {% for session_year in session_years %}<option value="{{ session_year.id }}">{{ session_year.session_start_year }} to {{session_year.session_end_year }}
                   </option>
                   {% endfor %}
                 </select>
@@ -76,9 +72,9 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                   class="form-control"
                   id="expiry_time"
                   name="expiry_time"
-                  value="5"
+                  value="30"
                   min="1"
-                  max="30"
+                  max="120"
                 />
               </div>
 
@@ -118,6 +114,28 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                 </div>
                 <div id="locationStatus" class="mt-2"></div>
               </div>
+
+              <!-- Network Verification Settings -->
+              <div class="form-group">
+                <div class="custom-control custom-switch">
+                  <input
+                    type="checkbox"
+                    class="custom-control-input"
+                    id="enableNetwork"
+                  />
+                  <label class="custom-control-label" for="enableNetwork"
+                    >Require Same Network Connection</label
+                  >
+                </div>
+                <small class="form-text text-muted"
+                  >Students must be connected to the same WiFi network as you to mark attendance.</small
+                >
+                <div id="networkStatus" class="mt-2"></div>
+              </div>
+
+              <!-- Hidden fields for network data -->
+              <input type="hidden" id="teacher_ip" name="teacher_ip" />
+              <input type="hidden" id="teacher_ssid" name="teacher_ssid" />
             </form>
           </div>
 
@@ -278,6 +296,32 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
     }
   }
 
+  // Network detection functions
+  function getNetworkInfo() {
+    // Get teacher's IP address from server
+    $.ajax({
+      url: '{% url "get_network_info" %}',
+      type: 'GET',
+      success: function(data) {
+        if (data.status === 'success') {
+          $("#teacher_ip").val(data.ip_address);
+          $("#networkStatus").html(
+            '<div class="alert alert-info">Network detected: ' + data.ip_address + '</div>'
+          );
+        } else {
+          $("#networkStatus").html(
+            '<div class="alert alert-warning">Could not detect network information</div>'
+          );
+        }
+      },
+      error: function() {
+        $("#networkStatus").html(
+          '<div class="alert alert-danger">Error detecting network information</div>'
+        );
+      }
+    });
+  }
+
   // Update radius circle based on input value
   function updateRadiusCircle() {
     if (currentPosition && map) {
@@ -319,6 +363,17 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
       } else {
         $("#radius").prop("disabled", true);
         $("#map_container").hide();
+      }
+    });
+
+    // Toggle network verification functionality
+    $("#enableNetwork").on("change", function () {
+      if ($(this).is(":checked")) {
+        getNetworkInfo();
+      } else {
+        $("#teacher_ip").val("");
+        $("#teacher_ssid").val("");
+        $("#networkStatus").html("");
       }
     });
 
@@ -374,6 +429,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
       var expiry_time = $("#expiry_time").val();
       var radius = $("#radius").val();
       var enableLocation = $("#enableLocation").is(":checked");
+      var enableNetwork = $("#enableNetwork").is(":checked");
 
       if (!subject || !session_year || !expiry_time) {
         alert("Please select a subject, session year, and enter expiry time.");
@@ -384,6 +440,14 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
       if (enableLocation && !currentPosition) {
         alert(
           "Location is required but not available. Please allow location access and try again."
+        );
+        return;
+      }
+
+      // Check if network verification is enabled but network info not available
+      if (enableNetwork && !$("#teacher_ip").val()) {
+        alert(
+          "Network verification is enabled but network information is not available. Please try again."
         );
         return;
       }
@@ -402,6 +466,13 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         requestData.radius = radius;
       }
 
+      // Add network data if enabled
+      if (enableNetwork) {
+        requestData.require_same_network = true;
+        requestData.teacher_ip = $("#teacher_ip").val();
+        requestData.teacher_ssid = $("#teacher_ssid").val();
+      }
+
       $.ajax({
         url: '{% url "staff_generate_qr" %}',
         type: "POST",
@@ -409,10 +480,14 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         success: function (data) {
           if (data.status === "success") {
             var locationInfo = enableLocation
-              ? "<p>Location verification is enabled. Students must be within " +
+              ? "<p><i class='fas fa-map-marker-alt'></i> Location verification is enabled. Students must be within " +
                 radius +
                 " meters of your location.</p>"
-              : "<p>Location verification is disabled.</p>";
+              : "<p><i class='fas fa-map-marker-alt text-muted'></i> Location verification is disabled.</p>";
+
+            var networkInfo = enableNetwork
+              ? "<p><i class='fas fa-wifi'></i> Network verification is enabled. Students must be on the same network.</p>"
+              : "<p><i class='fas fa-wifi text-muted'></i> Network verification is disabled.</p>";
 
             var code_html =
               "<div class='alert alert-info'>Generated QR Code:<br>" +
@@ -423,6 +498,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
               data.expiry_time +
               "<br>" +
               locationInfo +
+              networkInfo +
               "<div class='mt-3'>" +
               "<a href='" +
               data.qr_code_url +

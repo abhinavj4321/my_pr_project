@@ -17,6 +17,7 @@ class SessionYearModel(models.Model):
 class CustomUser(AbstractUser):
     USER_TYPE_CHOICES = ((1, "HOD"), (2, "Staff"), (3, "Student"))
     user_type = models.CharField(default=1, choices=USER_TYPE_CHOICES, max_length=10)
+    email = models.EmailField(unique=True)
 
 # ✅ AdminHOD Model
 class AdminHOD(models.Model):
@@ -88,6 +89,10 @@ class AttendanceQRCode(models.Model):
     teacher_latitude = models.FloatField(null=True, blank=True)
     teacher_longitude = models.FloatField(null=True, blank=True)
     allowed_radius = models.FloatField(default=100)  # Radius in meters
+    # Network verification fields
+    teacher_ip_address = models.GenericIPAddressField(null=True, blank=True)  # Teacher's IP address
+    teacher_network_ssid = models.CharField(max_length=100, null=True, blank=True)  # WiFi network name
+    require_same_network = models.BooleanField(default=False)  # Whether to enforce network verification
 
 # ✅ Attendance Report Model
 class AttendanceReport(models.Model):
@@ -100,6 +105,10 @@ class AttendanceReport(models.Model):
     student_accuracy = models.FloatField(null=True, blank=True)  # Location accuracy in meters
     location_verified = models.BooleanField(default=False)
     verification_details = models.JSONField(null=True, blank=True)  # Store detailed verification results
+    # Network verification fields
+    student_ip_address = models.GenericIPAddressField(null=True, blank=True)  # Student's IP address
+    student_network_ssid = models.CharField(max_length=100, null=True, blank=True)  # Student's WiFi network
+    network_verified = models.BooleanField(default=False)  # Whether network verification passed
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     objects = models.Manager()

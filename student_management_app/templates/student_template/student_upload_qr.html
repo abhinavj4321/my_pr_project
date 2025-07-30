@@ -1,7 +1,7 @@
 {% extends 'student_template/base_template.html' %}
 
 {% block page_title %}
-    Upload QR Code
+    QR Code Attendance
 {% endblock page_title %}
 
 {% block main_content %}
@@ -14,7 +14,19 @@
             <div class="col-md-12">
                 <div class="custom-card">
                     <div class="card-header">
-                        <h3 class="card-title">Upload QR Code</h3>
+                        <h3 class="card-title">
+                            <i class="fas fa-qrcode mr-2"></i>QR Code Attendance
+                        </h3>
+                        <div class="card-tools">
+                            <div class="btn-group" role="group">
+                                <button type="button" id="scan-tab" class="btn btn-sm btn-primary active">
+                                    <i class="fas fa-camera mr-1"></i>Scan QR
+                                </button>
+                                <button type="button" id="upload-tab" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-upload mr-1"></i>Upload QR
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {% if messages %}
@@ -41,7 +53,44 @@
 
                     <div id="locationStatus" class="mb-3"></div>
 
-                    <form id="upload_qr_form" method="POST" enctype="multipart/form-data">
+                    <!-- QR Code Scanning Section -->
+                    <div id="scan-section" class="qr-section">
+                        <div class="alert alert-info">
+                            <p>
+                                <i class="fas fa-info-circle mr-2"></i>Please allow camera access when prompted. Position the QR code within the scanning area.
+                            </p>
+                        </div>
+
+                        <div id="scan-error-message" class="alert alert-danger" style="display: none"></div>
+                        <div id="scan-success-message" class="alert alert-success" style="display: none"></div>
+
+                        <div class="scanner-container">
+                            <video id="preview" style="display: none"></video>
+                            <div id="scanner-overlay" style="display: none"></div>
+                            <div id="camera-placeholder">
+                                <div class="text-center">
+                                    <i class="fas fa-camera fa-4x mb-3 text-muted"></i>
+                                    <p>Camera preview will appear here</p>
+                                    <p class="text-muted">
+                                        <small>Click "Start Camera" to begin scanning</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group text-center">
+                            <button id="start-button" class="btn btn-success">
+                                <i class="fas fa-play mr-2"></i>Start Camera
+                            </button>
+                            <button id="stop-button" class="btn btn-danger" style="display: none">
+                                <i class="fas fa-stop mr-2"></i>Stop Camera
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- QR Code Upload Section -->
+                    <div id="upload-section" class="qr-section" style="display: none;">
+                        <form id="upload_qr_form" method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="form-group">
                             <label for="qr_image">QR Code Image:</label>
@@ -51,10 +100,11 @@
                         <input type="hidden" id="latitude" name="latitude">
                         <input type="hidden" id="longitude" name="longitude">
                         
-                        <button type="button" id="upload_qr_btn" class="btn custom-btn">Upload</button>
-                    </form>
+                            <button type="button" id="upload_qr_btn" class="btn custom-btn">Upload</button>
+                        </form>
 
-                    <div id="upload_result" class="mt-3"></div>
+                        <div id="upload_result" class="mt-3"></div>
+                    </div>
 
                     <!-- Map Display -->
                     <div id="map_container" class="mt-4" style="display: none;">
@@ -90,6 +140,52 @@
         background-color: #0056b3;
     }
 
+    /* QR Scanner Styles */
+    .scanner-container {
+        position: relative;
+        max-width: 400px;
+        margin: 0 auto;
+        background: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px dashed #dee2e6;
+    }
+
+    #preview {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+    }
+
+    #scanner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 2px solid #28a745;
+        box-sizing: border-box;
+        pointer-events: none;
+    }
+
+    #camera-placeholder {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+    }
+
+    .qr-section {
+        transition: all 0.3s ease;
+    }
+
+    .btn-group .btn.active {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+
     .alert {
         padding: 10px;
         margin-top: 10px;
@@ -118,6 +214,8 @@
 {% block custom_js %}
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- jsQR Library for QR Code Scanning -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
 <script>
     // Global variables for map functionality
@@ -125,19 +223,46 @@
     var studentMarker;
     var currentPosition = null;
 
+    // Global variables for QR scanning
+    var video, canvasElement, canvas;
+    var scanning = false;
+    var lastScanTime = 0;
+    var scanCooldown = 2000; // 2 seconds between scans
+
     // Initialize map when document is ready
     $(document).ready(function() {
         // Create map but don't show it yet
         map = L.map('map');
-        
+
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-        
+
         // Get location immediately
         getLocation();
+
+        // Initialize QR scanning elements
+        video = document.getElementById('preview');
+        canvasElement = document.createElement('canvas');
+        canvas = canvasElement.getContext('2d');
+
+        // Tab switching functionality
+        $('#scan-tab').click(function() {
+            $('#scan-tab').addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
+            $('#upload-tab').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
+            $('#scan-section').show();
+            $('#upload-section').hide();
+        });
+
+        $('#upload-tab').click(function() {
+            $('#upload-tab').addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
+            $('#scan-tab').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
+            $('#upload-section').show();
+            $('#scan-section').hide();
+            stopCamera(); // Stop camera if it's running
+        });
     });
     
     // Get user's current location
@@ -260,7 +385,168 @@
                 }
             });
         });
+
+        // Check if jsQR library is loaded
+        if (typeof jsQR === 'undefined') {
+            console.error('jsQR library not loaded');
+            $('#scan-error-message').html('<i class="fas fa-exclamation-circle mr-2"></i>QR scanning library not loaded. Please refresh the page.').show();
+        }
+
+        // QR Scanner functionality
+        $('#start-button').click(function() {
+            if (typeof jsQR === 'undefined') {
+                $('#scan-error-message').html('<i class="fas fa-exclamation-circle mr-2"></i>QR scanning library not loaded. Please refresh the page.').show();
+                return;
+            }
+            startCamera();
+        });
+
+        $('#stop-button').click(function() {
+            stopCamera();
+        });
     });
+
+    // Start camera for QR scanning
+    function startCamera() {
+        if (!video) {
+            $('#scan-error-message').html('<i class="fas fa-exclamation-circle mr-2"></i>Video element not found. Please refresh the page.').show();
+            return;
+        }
+
+        $('#scan-error-message').hide();
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(function(stream) {
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true);
+                video.play();
+
+                $('#camera-placeholder').hide();
+                $('#preview').show();
+                $('#scanner-overlay').show();
+                $('#start-button').hide();
+                $('#stop-button').show();
+
+                scanning = true;
+                requestAnimationFrame(tick);
+            })
+            .catch(function(err) {
+                console.error('Camera error:', err);
+                $('#scan-error-message').html('<i class="fas fa-exclamation-circle mr-2"></i>Camera access denied or not available: ' + err.message).show();
+            });
+    }
+
+    // Stop camera
+    function stopCamera() {
+        scanning = false;
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+        $('#preview').hide();
+        $('#scanner-overlay').hide();
+        $('#camera-placeholder').show();
+        $('#stop-button').hide();
+        $('#start-button').show();
+    }
+
+    // Process video frames to detect QR codes
+    function tick() {
+        try {
+            if (video && video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
+                canvasElement.height = video.videoHeight;
+                canvasElement.width = video.videoWidth;
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+
+                var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+
+                if (typeof jsQR !== 'undefined') {
+                    var code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+
+                    if (code) {
+                        var currentTime = Date.now();
+                        if (currentTime - lastScanTime > scanCooldown) {
+                            scanning = false;
+                            lastScanTime = currentTime;
+                            processScannedQR(code.data);
+                        }
+                    }
+                } else {
+                    console.error('jsQR library not loaded');
+                    $('#scan-error-message').html('<i class="fas fa-exclamation-circle mr-2"></i>QR scanning library not loaded. Please refresh the page.').show();
+                    scanning = false;
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('Error in tick function:', error);
+            $('#scan-error-message').html('<i class="fas fa-exclamation-circle mr-2"></i>Error processing video: ' + error.message).show();
+            scanning = false;
+            return;
+        }
+
+        if (scanning) {
+            requestAnimationFrame(tick);
+        }
+    }
+
+    // Process scanned QR code
+    function processScannedQR(qrData) {
+        // Extract token from QR data URL
+        let token = qrData;
+        try {
+            const url = new URL(qrData);
+            const urlToken = url.searchParams.get('token');
+            if (urlToken) {
+                token = urlToken;
+            }
+        } catch (e) {
+            // If it's not a valid URL, assume it's already a token
+            console.log('QR data is not a URL, treating as token:', qrData);
+        }
+
+        // Location is now optional - send what we have
+        $('#scan-error-message').hide();
+        $('#scan-success-message').html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing QR code...').show();
+
+        // Send scanned QR data to server
+        $.ajax({
+            url: '{% url "student_process_qr_scan" %}',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'token': token,
+                'latitude': currentPosition ? currentPosition.lat : null,
+                'longitude': currentPosition ? currentPosition.lng : null
+            }),
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data) {
+                if (data.status === 'success') {
+                    $('#scan-success-message').html('<i class="fas fa-check-circle mr-2"></i>' + data.message).show();
+                    stopCamera();
+                } else {
+                    $('#scan-error-message').html('<i class="fas fa-exclamation-circle mr-2"></i>' + data.message).show();
+                    $('#scan-success-message').hide();
+                    // Don't restart scanning automatically on error
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMessage = 'Error processing QR code. Please try again.';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMessage = response.message || errorMessage;
+                } catch (e) {
+                    console.error('Error parsing response:', e);
+                }
+                $('#scan-error-message').html('<i class="fas fa-exclamation-circle mr-2"></i>' + errorMessage).show();
+                $('#scan-success-message').hide();
+                // Don't restart scanning automatically on error
+            }
+        });
+    }
 </script>
 {% endblock custom_js %}
 

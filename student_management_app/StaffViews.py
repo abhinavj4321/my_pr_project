@@ -28,19 +28,30 @@ from student_management_app.models import (
     SessionYearModel, Attendance, AttendanceReport, StudentResult
 )
 from .models import AttendanceQRCode
+from .utils import get_client_ip
 from .utils import export_attendance_to_excel
 
 def staff_generate_qr(request):
+    print(f"QR Generation request: {request.method}")  # Debug
     if request.method == "POST":
+        print(f"POST data: {request.POST}")  # Debug
         subject_id = request.POST.get('subject')
         session_year_id = request.POST.get('session_year')
-        expiry_minutes = request.POST.get('expiry_time', 5)
+        expiry_minutes = request.POST.get('expiry_time', 30)
         teacher_latitude = request.POST.get('latitude')
         teacher_longitude = request.POST.get('longitude')
         allowed_radius = request.POST.get('radius', 10)
 
+        # Network verification parameters
+        require_same_network = request.POST.get('require_same_network', False)
+        teacher_ip = request.POST.get('teacher_ip')
+        teacher_ssid = request.POST.get('teacher_ssid')
+
+        print(f"Parsed data - Subject: {subject_id}, Session: {session_year_id}, Expiry: {expiry_minutes}")  # Debug
+
         # Ensure required fields are present
         if not subject_id or not session_year_id:
+            print("Missing required fields!")  # Debug
             return JsonResponse({"status": "error", "message": "Subject and session year are required."}, status=400)
 
         try:
@@ -57,6 +68,7 @@ def staff_generate_qr(request):
             qr_io = BytesIO()
             qr.save(qr_io, format="PNG")
 
+            # Create QR code instance with basic fields first
             qr_code_instance = AttendanceQRCode(
                 subject=subject,
                 session_year=session_year,
@@ -67,6 +79,15 @@ def staff_generate_qr(request):
                 teacher_longitude=float(teacher_longitude) if teacher_longitude else None,
                 allowed_radius=float(allowed_radius)
             )
+
+            # Add network verification fields if they exist in the model
+            try:
+                qr_code_instance.require_same_network = bool(require_same_network)
+                qr_code_instance.teacher_ip_address = teacher_ip
+                qr_code_instance.teacher_network_ssid = teacher_ssid
+            except AttributeError:
+                # Network fields don't exist yet, skip them
+                pass
             qr_code_instance.qr_code_image.save(f"qr_{subject.id}_{session_year.id}.png", ContentFile(qr_io.getvalue()), save=True)
 
             # Get the full URL to the QR code image
@@ -811,3 +832,24 @@ def staff_export_attendance_data(request):
         import traceback
         print(traceback.format_exc())
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+@csrf_exempt
+def get_network_info(request):
+    """Get teacher's network information for network verification"""
+    if request.method == 'GET':
+        try:
+            # Get teacher's IP address
+            teacher_ip = get_client_ip(request)
+
+            return JsonResponse({
+                'status': 'success',
+                'ip_address': teacher_ip
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error getting network info: {str(e)}'
+            })
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
