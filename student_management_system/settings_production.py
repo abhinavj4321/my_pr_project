@@ -6,28 +6,25 @@ from .settings import *
 # Temporarily enable DEBUG to see the actual error
 DEBUG = True
 
+# For now, use SQLite to get the app working, then we can migrate to PostgreSQL later
 # Parse database connection url
 DATABASE_URL = os.environ.get('DATABASE_URL')
 print(f"DATABASE_URL: {DATABASE_URL}")  # Debug
 
-if DATABASE_URL:
+if DATABASE_URL and 'postgres' in DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
     print(f"Using PostgreSQL database: {DATABASES['default']['ENGINE']}")  # Debug
 else:
-    # Fallback to PostgreSQL with individual environment variables
+    # Use SQLite for now since PostgreSQL has compatibility issues with Python 3.13
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('PGDATABASE', 'student_attendance'),
-            'USER': os.environ.get('PGUSER', 'student_attendance_user'),
-            'PASSWORD': os.environ.get('PGPASSWORD', ''),
-            'HOST': os.environ.get('PGHOST', 'localhost'),
-            'PORT': os.environ.get('PGPORT', '5432'),
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
-    print("Using fallback PostgreSQL configuration")  # Debug
+    print("Using SQLite database for compatibility")  # Debug
 
 # Use environment variable for secret key
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)

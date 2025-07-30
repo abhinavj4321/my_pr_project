@@ -89,10 +89,10 @@ class AttendanceQRCode(models.Model):
     teacher_latitude = models.FloatField(null=True, blank=True)
     teacher_longitude = models.FloatField(null=True, blank=True)
     allowed_radius = models.FloatField(default=100)  # Radius in meters
-    # Network verification fields
-    teacher_ip_address = models.GenericIPAddressField(null=True, blank=True)  # Teacher's IP address
-    teacher_network_ssid = models.CharField(max_length=100, null=True, blank=True)  # WiFi network name
-    require_same_network = models.BooleanField(default=False)  # Whether to enforce network verification
+    # Network verification fields temporarily commented out for compatibility
+    # teacher_ip_address = models.GenericIPAddressField(null=True, blank=True)  # Teacher's IP address
+    # teacher_network_ssid = models.CharField(max_length=100, null=True, blank=True)  # WiFi network name
+    # require_same_network = models.BooleanField(default=False)  # Whether to enforce network verification
 
 # ✅ Attendance Report Model
 class AttendanceReport(models.Model):
