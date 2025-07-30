@@ -8,10 +8,26 @@ DEBUG = True
 
 # Parse database connection url
 DATABASE_URL = os.environ.get('DATABASE_URL')
+print(f"DATABASE_URL: {DATABASE_URL}")  # Debug
+
 if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
+    print(f"Using PostgreSQL database: {DATABASES['default']['ENGINE']}")  # Debug
+else:
+    # Fallback to PostgreSQL with individual environment variables
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('PGDATABASE', 'student_attendance'),
+            'USER': os.environ.get('PGUSER', 'student_attendance_user'),
+            'PASSWORD': os.environ.get('PGPASSWORD', ''),
+            'HOST': os.environ.get('PGHOST', 'localhost'),
+            'PORT': os.environ.get('PGPORT', '5432'),
+        }
+    }
+    print("Using fallback PostgreSQL configuration")  # Debug
 
 # Use environment variable for secret key
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
