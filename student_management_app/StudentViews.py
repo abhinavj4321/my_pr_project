@@ -7,7 +7,14 @@ from django.urls import reverse
 from django.utils.timezone import now
 import datetime
 import os
-import cv2
+# OpenCV is optional for deployment
+try:
+    import cv2
+    OPENCV_AVAILABLE = True
+except ImportError:
+    OPENCV_AVAILABLE = False
+    print("OpenCV not available - QR scanning will use alternative methods")
+
 import numpy as np
 import json
 import tempfile
@@ -55,11 +62,18 @@ def student_home(request):
     return render(request, "student_template/student_home_template.html", context)
 
 def decode_qr_code(image_path):
-    """ Decodes QR Code using OpenCV """
-    img = cv2.imread(image_path)
-    detector = cv2.QRCodeDetector()
-    data, _, _ = detector.detectAndDecode(img)
-    return data if data else None
+    """ Decodes QR Code using OpenCV (if available) """
+    if not OPENCV_AVAILABLE:
+        return None
+
+    try:
+        img = cv2.imread(image_path)
+        detector = cv2.QRCodeDetector()
+        data, _, _ = detector.detectAndDecode(img)
+        return data if data else None
+    except Exception as e:
+        print(f"OpenCV QR decode error: {e}")
+        return None
 
 @csrf_exempt
 def student_upload_qr(request):
@@ -102,8 +116,8 @@ def student_upload_qr(request):
                 except Exception as pyzbar_error:
                     print(f"Pyzbar failed: {pyzbar_error}")
 
-                # If pyzbar failed, try OpenCV as fallback
-                if not token:
+                # If pyzbar failed, try OpenCV as fallback (if available)
+                if not token and OPENCV_AVAILABLE:
                     try:
                         # Save uploaded file temporarily
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
