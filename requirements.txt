@@ -6,15 +6,15 @@ sqlparse==0.3.1
 
 # Excel handling
 openpyxl==3.1.2
-pandas==2.0.3
+pandas==2.1.4
 
 # QR code generation and scanning
 qrcode==7.4.2
-pillow==9.5.0
+pillow==10.0.1
 
 # Computer vision
-opencv-python-headless==4.8.0.76
-numpy==1.24.3
+opencv-python-headless==4.8.1.78
+numpy==1.25.2
 
 # Geolocation
 geopy==2.3.0
