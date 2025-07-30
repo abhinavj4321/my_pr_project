@@ -1,5 +1,5 @@
-# Django and related packages
-Django==3.2.18
+# Django and related packages - Updated for Python 3.13 compatibility
+Django==4.2.16
 asgiref==3.8.1
 pytz==2024.2
 sqlparse==0.5.1
