@@ -1,53 +1,62 @@
-{% extends 'staff_template/base_template.html' %} {% block page_title %} Staff
-Home {% endblock page_title %} {% block main_content %} {% load static %}
+{% extends 'staff_template/base_template.html' %}
+{% block page_title %}Staff Home{% endblock page_title %}
+{% block breadcrumb %}Dashboard{% endblock %}
+{% block main_content %}
+{% load static %}
 
-<section class="content">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-lg-3 col-6">
-        <div class="small-box bg-info">
-          <div class="inner">
-            <h3>{{ students_count }}</h3>
-            <p>Students Under Me</p>
-          </div>
-          <div class="icon">
-            <i class="ion ion-stats-bars"></i>
-          </div>
-          <a href="{% url 'staff_take_attendance' %}" class="small-box-footer"
-            >More info <i class="fas fa-arrow-circle-right"></i
-          ></a>
-        </div>
+<!-- Dashboard Stats -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <!-- Students Count -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-600">Students Under Me</p>
+        <p class="text-3xl font-bold text-blue-600">{{ students_count }}</p>
       </div>
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+        <i class="fas fa-users text-blue-600 text-xl"></i>
+      </div>
+    </div>
+    <div class="mt-4">
+      <a href="{% url 'staff_take_attendance' %}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+        View Details <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+  </div>
 
-      <div class="col-lg-3 col-6">
-        <div class="small-box bg-success">
-          <div class="inner">
-            <h3>{{ attendance_count }}</h3>
-            <p>Attendance Taken</p>
-          </div>
-          <div class="icon">
-            <i class="ion ion-stats-bars"></i>
-          </div>
-          <a href="{% url 'staff_view_attendance' %}" class="small-box-footer"
-            >More info <i class="fas fa-arrow-circle-right"></i
-          ></a>
-        </div>
+  <!-- Attendance Count -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-600">Attendance Taken</p>
+        <p class="text-3xl font-bold text-green-600">{{ attendance_count }}</p>
       </div>
+      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+        <i class="fas fa-calendar-check text-green-600 text-xl"></i>
+      </div>
+    </div>
+    <div class="mt-4">
+      <a href="{% url 'staff_view_attendance' %}" class="text-sm text-green-600 hover:text-green-800 font-medium">
+        View Details <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+  </div>
 
-      <div class="col-lg-3 col-6">
-        <div class="small-box bg-warning">
-          <div class="inner">
-            <h3>{{ subject_count }}</h3>
-            <p>Subjects</p>
-          </div>
-          <div class="icon">
-            <i class="ion ion-stats-bars"></i>
-          </div>
-          <a href="#" class="small-box-footer"
-            >More info <i class="fas fa-arrow-circle-right"></i
-          ></a>
-        </div>
+  <!-- Subjects Count -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium text-gray-600">Subjects</p>
+        <p class="text-3xl font-bold text-yellow-600">{{ subject_count }}</p>
       </div>
+      <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+        <i class="fas fa-book text-yellow-600 text-xl"></i>
+      </div>
+    </div>
+    <div class="mt-4">
+      <span class="text-sm text-gray-500">Total subjects assigned</span>
+    </div>
+  </div>
 
       <div class="col-lg-3 col-6">
         <div class="small-box bg-danger">
