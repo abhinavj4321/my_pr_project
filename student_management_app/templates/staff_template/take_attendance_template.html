@@ -115,27 +115,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                 <div id="locationStatus" class="mt-2"></div>
               </div>
 
-              <!-- Network Verification Settings -->
-              <div class="form-group">
-                <div class="custom-control custom-switch">
-                  <input
-                    type="checkbox"
-                    class="custom-control-input"
-                    id="enableNetwork"
-                  />
-                  <label class="custom-control-label" for="enableNetwork"
-                    >Require Same Network Connection</label
-                  >
-                </div>
-                <small class="form-text text-muted"
-                  >Students must be connected to the same WiFi network as you to mark attendance.</small
-                >
-                <div id="networkStatus" class="mt-2"></div>
-              </div>
-
-              <!-- Hidden fields for network data -->
-              <input type="hidden" id="teacher_ip" name="teacher_ip" />
-              <input type="hidden" id="teacher_ssid" name="teacher_ssid" />
+              <!-- Network verification removed - only location-based verification is used -->
             </form>
           </div>
 
@@ -296,31 +276,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
     }
   }
 
-  // Network detection functions
-  function getNetworkInfo() {
-    // Get teacher's IP address from server
-    $.ajax({
-      url: '{% url "get_network_info" %}',
-      type: 'GET',
-      success: function(data) {
-        if (data.status === 'success') {
-          $("#teacher_ip").val(data.ip_address);
-          $("#networkStatus").html(
-            '<div class="alert alert-info">Network detected: ' + data.ip_address + '</div>'
-          );
-        } else {
-          $("#networkStatus").html(
-            '<div class="alert alert-warning">Could not detect network information</div>'
-          );
-        }
-      },
-      error: function() {
-        $("#networkStatus").html(
-          '<div class="alert alert-danger">Error detecting network information</div>'
-        );
-      }
-    });
-  }
+  // Network verification removed
 
   // Update radius circle based on input value
   function updateRadiusCircle() {
@@ -366,16 +322,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
       }
     });
 
-    // Toggle network verification functionality
-    $("#enableNetwork").on("change", function () {
-      if ($(this).is(":checked")) {
-        getNetworkInfo();
-      } else {
-        $("#teacher_ip").val("");
-        $("#teacher_ssid").val("");
-        $("#networkStatus").html("");
-      }
-    });
+    // Network verification removed
 
     // Fetch students when subject and session are selected
     $("#fetch_student").click(function () {
@@ -429,7 +376,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
       var expiry_time = $("#expiry_time").val();
       var radius = $("#radius").val();
       var enableLocation = $("#enableLocation").is(":checked");
-      var enableNetwork = $("#enableNetwork").is(":checked");
+      // Network verification removed
 
       if (!subject || !session_year || !expiry_time) {
         alert("Please select a subject, session year, and enter expiry time.");
@@ -444,13 +391,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         return;
       }
 
-      // Check if network verification is enabled but network info not available
-      if (enableNetwork && !$("#teacher_ip").val()) {
-        alert(
-          "Network verification is enabled but network information is not available. Please try again."
-        );
-        return;
-      }
+      // Network verification removed
 
       var requestData = {
         subject: subject,
@@ -466,12 +407,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         requestData.radius = radius;
       }
 
-      // Add network data if enabled
-      if (enableNetwork) {
-        requestData.require_same_network = true;
-        requestData.teacher_ip = $("#teacher_ip").val();
-        requestData.teacher_ssid = $("#teacher_ssid").val();
-      }
+      // Network verification removed
 
       $.ajax({
         url: '{% url "staff_generate_qr" %}',
@@ -485,9 +421,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                 " meters of your location.</p>"
               : "<p><i class='fas fa-map-marker-alt text-muted'></i> Location verification is disabled.</p>";
 
-            var networkInfo = enableNetwork
-              ? "<p><i class='fas fa-wifi'></i> Network verification is enabled. Students must be on the same network.</p>"
-              : "<p><i class='fas fa-wifi text-muted'></i> Network verification is disabled.</p>";
+            var networkInfo = "<p><i class='fas fa-wifi text-muted'></i> Network verification is disabled (location-only verification).</p>";
 
             var code_html =
               "<div class='alert alert-info'>Generated QR Code:<br>" +

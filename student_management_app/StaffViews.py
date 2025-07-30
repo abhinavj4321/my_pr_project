@@ -42,10 +42,7 @@ def staff_generate_qr(request):
         teacher_longitude = request.POST.get('longitude')
         allowed_radius = request.POST.get('radius', 10)
 
-        # Network verification parameters
-        require_same_network = request.POST.get('require_same_network', False)
-        teacher_ip = request.POST.get('teacher_ip')
-        teacher_ssid = request.POST.get('teacher_ssid')
+        # Network verification removed
 
         print(f"Parsed data - Subject: {subject_id}, Session: {session_year_id}, Expiry: {expiry_minutes}")  # Debug
 
@@ -80,14 +77,7 @@ def staff_generate_qr(request):
                 allowed_radius=float(allowed_radius)
             )
 
-            # Add network verification fields if they exist in the model
-            try:
-                qr_code_instance.require_same_network = bool(require_same_network)
-                qr_code_instance.teacher_ip_address = teacher_ip
-                qr_code_instance.teacher_network_ssid = teacher_ssid
-            except AttributeError:
-                # Network fields don't exist yet, skip them
-                pass
+            # Network verification removed
             qr_code_instance.qr_code_image.save(f"qr_{subject.id}_{session_year.id}.png", ContentFile(qr_io.getvalue()), save=True)
 
             # Get the full URL to the QR code image
@@ -834,22 +824,4 @@ def staff_export_attendance_data(request):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 
-@csrf_exempt
-def get_network_info(request):
-    """Get teacher's network information for network verification"""
-    if request.method == 'GET':
-        try:
-            # Get teacher's IP address
-            teacher_ip = get_client_ip(request)
-
-            return JsonResponse({
-                'status': 'success',
-                'ip_address': teacher_ip
-            })
-        except Exception as e:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Error getting network info: {str(e)}'
-            })
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+# Network verification function removed

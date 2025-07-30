@@ -204,37 +204,7 @@ def student_upload_qr(request):
                                 'message': 'You are not within the allowed radius for attendance'
                             })
 
-                    # Verify network connectivity if required
-                    network_verified = False
-                    network_verification_details = None
-                    # Check if network verification is required (field might not exist yet)
-                    require_network = getattr(qr_code, 'require_same_network', False)
-                    if require_network:
-                        student_ip = get_client_ip(request)
-
-                        teacher_ip = getattr(qr_code, 'teacher_ip_address', None)
-                        teacher_ssid = getattr(qr_code, 'teacher_network_ssid', None)
-                        if teacher_ip and student_ip:
-                            network_verification = verify_network_connectivity(
-                                student_ip=student_ip,
-                                teacher_ip=teacher_ip,
-                                student_ssid=None,  # WiFi SSID detection requires client-side JS
-                                teacher_ssid=teacher_ssid
-                            )
-
-                            network_verified = network_verification['is_same_network']
-                            network_verification_details = network_verification
-
-                            if not network_verified:
-                                return JsonResponse({
-                                    'status': 'error',
-                                    'message': 'You must be connected to the same network as your teacher to mark attendance'
-                                })
-                        else:
-                            return JsonResponse({
-                                'status': 'error',
-                                'message': 'Network verification is required but network information is not available'
-                            })
+                    # Network verification removed - only location-based verification is used
 
                     # Create attendance report with proper data types
                     # Create a verification details dictionary if we have location data
@@ -248,11 +218,7 @@ def student_upload_qr(request):
                             'is_reliable': bool(verification_result['is_reliable'])
                         }
 
-                    # Add network verification details if available
-                    if network_verification_details:
-                        if verification_details is None:
-                            verification_details = {}
-                        verification_details['network_verification'] = network_verification_details
+                    # Network verification removed
 
                     # Get student's IP for network verification
                     student_ip = get_client_ip(request)
@@ -520,38 +486,7 @@ def student_process_qr_scan(request):
                         # No location verification required
                         location_verified = True  # Allow attendance without location verification
 
-                # Verify network connectivity if required
-                network_verified = False
-                network_verification_details = None
-                # Check if network verification is required (field might not exist yet)
-                require_network = getattr(qr_code, 'require_same_network', False)
-                if require_network:
-                    student_ip = get_client_ip(request)
-                    teacher_ip = getattr(qr_code, 'teacher_ip_address', None)
-                    teacher_ssid = getattr(qr_code, 'teacher_network_ssid', None)
-
-                    if teacher_ip and student_ip:
-                        network_verification = verify_network_connectivity(
-                            student_ip=student_ip,
-                            teacher_ip=teacher_ip,
-                            student_ssid=None,  # WiFi SSID detection requires client-side JS
-                            teacher_ssid=teacher_ssid
-                        )
-
-                        network_verified = network_verification['is_same_network']
-                        network_verification_details = network_verification
-
-                        if not network_verified:
-                            return JsonResponse({
-                                'status': 'error',
-                                'message': 'You must be connected to the same network as your teacher to mark attendance',
-                                'network_details': network_verification_details
-                            })
-                    else:
-                        return JsonResponse({
-                            'status': 'error',
-                            'message': 'Network verification is required but network information is not available'
-                        })
+                # Network verification removed - only location-based verification is used
 
                 # Create attendance report with enhanced location details
                 # Convert location_details to a proper JSON-serializable format
@@ -587,13 +522,7 @@ def student_process_qr_scan(request):
                     verification_details=json_location_details
                 )
 
-                # Add network fields if they exist
-                try:
-                    attendance_report.student_ip_address = student_ip
-                    attendance_report.network_verified = bool(network_verified)
-                except AttributeError:
-                    # Network fields don't exist yet, skip them
-                    pass
+                # Network verification removed
                 attendance_report.save()
 
                 # Deactivate QR Code after successful attendance marking
