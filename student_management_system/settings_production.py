@@ -3,7 +3,8 @@ import dj_database_url
 from .settings import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# Temporarily enable DEBUG to see the actual error
+DEBUG = True
 
 # Parse database connection url
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -15,8 +16,8 @@ if DATABASE_URL:
 # Use environment variable for secret key
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 
-# Allow only Render host
-ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
+# Allow all hosts temporarily for debugging
+ALLOWED_HOSTS = ['*']
 
 # Enable WhiteNoise for static files
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
@@ -24,7 +25,8 @@ MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 # Static files configuration
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Temporarily use simpler static files storage
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Keep the existing STATICFILES_DIRS
 STATICFILES_DIRS = [
@@ -35,8 +37,8 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Security settings
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# Security settings - temporarily disabled for debugging
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 SECURE_BROWSER_XSS_FILTER = True
