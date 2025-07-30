@@ -164,6 +164,9 @@ QR Code {% endblock page_title %} {% block custom_css %}
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
 <script>
+  // Cache buster - force browser to reload JavaScript
+  console.log('QR Scanner loaded at:', new Date().toISOString());
+
   $(document).ready(function () {
     // Global variables
     let video = document.getElementById("preview");

@@ -218,10 +218,7 @@ def student_upload_qr(request):
                             'is_reliable': bool(verification_result['is_reliable'])
                         }
 
-                    # Network verification removed
-
-                    # Get student's IP for network verification
-                    student_ip = get_client_ip(request)
+                    # Network verification removed - no longer needed
 
                     # Create attendance report with basic fields
                     attendance_report = AttendanceReport(
@@ -234,13 +231,7 @@ def student_upload_qr(request):
                         verification_details=verification_details
                     )
 
-                    # Add network fields if they exist
-                    try:
-                        attendance_report.student_ip_address = student_ip
-                        attendance_report.network_verified = bool(network_verified)
-                    except AttributeError:
-                        # Network fields don't exist yet, skip them
-                        pass
+                    # Network verification removed - no longer needed
                     attendance_report.save()
 
                     return JsonResponse({
@@ -501,14 +492,7 @@ def student_process_qr_scan(request):
                         'is_reliable': bool(location_details['is_reliable'])
                     }
 
-                # Add network verification details if available
-                if network_verification_details:
-                    if json_location_details is None:
-                        json_location_details = {}
-                    json_location_details['network_verification'] = network_verification_details
-
-                # Get student's IP for network verification
-                student_ip = get_client_ip(request)
+                # Network verification removed - no longer needed
 
                 # Create attendance report with basic fields
                 attendance_report = AttendanceReport(
