@@ -59,7 +59,7 @@ urlpatterns = [
     path('update_attendance_data/', StaffViews.update_attendance_data, name="update_attendance_data"),
     path('staff_view_attendance/', StaffViews.staff_view_attendance, name="staff_view_attendance"),
     path("staff_generate_qr/", StaffViews.staff_generate_qr, name="staff_generate_qr"),
-    path("get_network_info/", StaffViews.get_network_info, name="get_network_info"),
+    # Network info URL removed
     path('staff_profile/', StaffViews.staff_profile, name="staff_profile"),
     path('staff_profile_update/', StaffViews.staff_profile_update, name="staff_profile_update"),
     path('staff_add_result/', StaffViews.staff_add_result, name="staff_add_result"),
