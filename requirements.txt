@@ -1,8 +1,8 @@
 # Django and related packages
 Django==3.2.18
-asgiref==3.2.10
-pytz==2020.1
-sqlparse==0.3.1
+asgiref==3.8.1
+pytz==2024.2
+sqlparse==0.5.1
 
 # Excel handling - using versions compatible with Python 3.13
 openpyxl==3.1.5
