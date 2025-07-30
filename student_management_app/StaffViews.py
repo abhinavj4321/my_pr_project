@@ -25,9 +25,8 @@ except (ImportError, AttributeError):
 
 from student_management_app.models import (
     CustomUser, Staffs, Courses, Subjects, Students,
-    SessionYearModel, Attendance, AttendanceReport, StudentResult
+    SessionYearModel, Attendance, AttendanceReport, StudentResult, AttendanceQRCode
 )
-from .models import AttendanceQRCode
 from .utils import get_client_ip
 from .utils import export_attendance_to_excel
 
@@ -52,20 +51,30 @@ def staff_generate_qr(request):
             return JsonResponse({"status": "error", "message": "Subject and session year are required."}, status=400)
 
         try:
+            print(f"Looking for subject with ID: {subject_id}")  # Debug
             subject = Subjects.objects.get(id=subject_id)
+            print(f"Found subject: {subject.subject_name}")  # Debug
+
+            print(f"Looking for session year with ID: {session_year_id}")  # Debug
             session_year = SessionYearModel.objects.get(id=session_year_id)
+            print(f"Found session year: {session_year}")  # Debug
 
             unique_token = str(uuid.uuid4())
+            print(f"Generated token: {unique_token}")  # Debug
 
             # Create a URL that includes the token for direct scanning
             # This URL will redirect to the login page if user is not logged in
             qr_data = f"{request.build_absolute_uri('/scan-attendance/')}?token={unique_token}"
+            print(f"QR data URL: {qr_data}")  # Debug
 
+            print("Creating QR code...")  # Debug
             qr = qrcode.make(qr_data)
             qr_io = BytesIO()
             qr.save(qr_io, format="PNG")
+            print("QR code created successfully")  # Debug
 
             # Create QR code instance with basic fields first
+            print("Creating QR code instance...")  # Debug
             qr_code_instance = AttendanceQRCode(
                 subject=subject,
                 session_year=session_year,
@@ -76,32 +85,44 @@ def staff_generate_qr(request):
                 teacher_longitude=float(teacher_longitude) if teacher_longitude else None,
                 allowed_radius=float(allowed_radius)
             )
+            print("QR code instance created")  # Debug
 
             # Network verification removed
+            print("Saving QR code image...")  # Debug
             qr_code_instance.qr_code_image.save(f"qr_{subject.id}_{session_year.id}.png", ContentFile(qr_io.getvalue()), save=True)
+            print("QR code image saved successfully")  # Debug
 
             # Get the full URL to the QR code image
             qr_code_url = qr_code_instance.qr_code_image.url
+            print(f"QR code URL: {qr_code_url}")  # Debug
 
             # Also include the base64 encoded image data for direct sharing
             import base64
             qr_io.seek(0)  # Reset the pointer to the beginning of the BytesIO object
             qr_base64 = base64.b64encode(qr_io.getvalue()).decode('utf-8')
             qr_data_url = f"data:image/png;base64,{qr_base64}"
+            print("Base64 encoding completed")  # Debug
 
-            return JsonResponse({
+            response_data = {
                 "status": "success",
                 "qr_code_url": qr_code_instance.qr_code_image.url,
                 "qr_data_url": qr_data_url,  # Include the base64 data URL
                 "expiry_time": qr_code_instance.expiry_time.strftime("%Y-%m-%d %H:%M:%S"),
-            })
+            }
+            print(f"Returning success response: {response_data}")  # Debug
+            return JsonResponse(response_data)
 
         except Subjects.DoesNotExist:
+            print(f"Subject not found with ID: {subject_id}")  # Debug
             return JsonResponse({"status": "error", "message": "Invalid subject ID."}, status=400)
         except SessionYearModel.DoesNotExist:
+            print(f"Session year not found with ID: {session_year_id}")  # Debug
             return JsonResponse({"status": "error", "message": "Invalid session year ID."}, status=400)
         except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+            print(f"Unexpected error in QR generation: {str(e)}")  # Debug
+            import traceback
+            traceback.print_exc()  # Print full traceback for debugging
+            return JsonResponse({"status": "error", "message": f"Error generating QR code: {str(e)}"}, status=400)
 
     return JsonResponse({"status": "error", "message": "Invalid request method."}, status=400)
 
