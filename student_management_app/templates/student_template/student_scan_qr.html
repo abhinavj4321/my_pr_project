@@ -178,6 +178,9 @@ QR Code {% endblock page_title %} {% block custom_css %}
       longitude: null,
       accuracy: null,
     };
+    let networkData = {
+      ssid: null,
+    };
     let map = null;
     let studentMarker = null;
 
@@ -506,11 +509,16 @@ QR Code {% endblock page_title %} {% block custom_css %}
       }
     }
 
+    // Function to get network SSID from user
+    function getNetworkSSID() {
+      // Since browsers cannot directly access WiFi SSID for security reasons,
+      // we need to ask the user to provide it
+      const ssid = prompt("Please enter your WiFi network name (SSID) for network verification:");
+      return ssid ? ssid.trim() : null;
+    }
+
     // Process the QR code data
     function processQRCode(qrData) {
-      // Note: Location verification is now optional and handled by the server
-      // We'll send whatever location data we have (if any)
-
       // Extract token from QR data URL
       let token = qrData;
       try {
@@ -523,6 +531,9 @@ QR Code {% endblock page_title %} {% block custom_css %}
         // If it's not a valid URL, assume it's already a token
         console.log('QR data is not a URL, treating as token:', qrData);
       }
+
+      // Get network SSID from user
+      networkData.ssid = getNetworkSSID();
 
       // Show processing message
       $("#error-message").hide();
@@ -537,7 +548,8 @@ QR Code {% endblock page_title %} {% block custom_css %}
         token: token,
         latitude: locationData.latitude || null,
         longitude: locationData.longitude || null,
-        accuracy: locationData.accuracy || null, // Include accuracy information
+        accuracy: locationData.accuracy || null,
+        network_ssid: networkData.ssid || null, // Include network SSID
       };
 
       // Send data to server
@@ -578,6 +590,35 @@ QR Code {% endblock page_title %} {% block custom_css %}
               detailsHtml += "</ul></div>";
 
               successMessage += detailsHtml;
+            }
+          }
+
+          // Add network verification details if available
+          if (response.network_verified !== undefined) {
+            let networkStatus = response.network_verified
+              ? '<span class="badge badge-success">Verified</span>'
+              : '<span class="badge badge-warning">Not Verified</span>';
+
+            successMessage +=
+              '<div class="mt-2">Network: ' + networkStatus + "</div>";
+
+            // If there are detailed network metrics, show them
+            if (response.network_details) {
+              const details = response.network_details;
+              let networkHtml =
+                '<div class="mt-2 p-2 bg-light border rounded">';
+              networkHtml += "<h6>Network Details:</h6>";
+              networkHtml += '<ul class="mb-0">';
+              if (details.verification_method) {
+                networkHtml += `<li>Method: ${details.verification_method}</li>`;
+              }
+              if (details.student_ssid && details.teacher_ssid) {
+                networkHtml += `<li>Your WiFi: ${details.student_ssid}</li>`;
+                networkHtml += `<li>Teacher WiFi: ${details.teacher_ssid}</li>`;
+              }
+              networkHtml += "</ul></div>";
+
+              successMessage += networkHtml;
             }
           }
 

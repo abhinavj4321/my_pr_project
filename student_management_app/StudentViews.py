@@ -379,6 +379,7 @@ def student_process_qr_scan(request):
             token = data.get('token')
             latitude = data.get('latitude')
             longitude = data.get('longitude')
+            student_ssid = data.get('network_ssid')  # Network SSID from student
 
             if not token:
                 return JsonResponse({'status': 'error', 'message': 'No QR code data provided'})
@@ -477,7 +478,40 @@ def student_process_qr_scan(request):
                         # No location verification required
                         location_verified = True  # Allow attendance without location verification
 
-                # Network verification removed - only location-based verification is used
+                # Network verification
+                network_verified = False
+                network_verification_details = None
+                student_ip = get_client_ip(request)
+
+                if qr_code.require_same_network:
+                    # Perform network verification
+                    network_verification_result = verify_network_connectivity(
+                        student_ip=student_ip,
+                        teacher_ip=qr_code.teacher_ip_address,
+                        student_ssid=student_ssid,
+                        teacher_ssid=qr_code.teacher_network_ssid
+                    )
+
+                    network_verified = network_verification_result['is_same_network']
+                    network_verification_details = {
+                        'student_ip': student_ip,
+                        'teacher_ip': qr_code.teacher_ip_address,
+                        'student_ssid': student_ssid,
+                        'teacher_ssid': qr_code.teacher_network_ssid,
+                        'ip_match': network_verification_result['ip_match'],
+                        'ssid_match': network_verification_result['ssid_match'],
+                        'verification_method': network_verification_result['verification_method']
+                    }
+
+                    if not network_verified:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Network verification failed. You must be connected to the same network as your teacher.',
+                            'network_details': network_verification_details
+                        })
+                else:
+                    # Network verification not required
+                    network_verified = True
 
                 # Create attendance report with enhanced location details
                 # Convert location_details to a proper JSON-serializable format
@@ -492,9 +526,7 @@ def student_process_qr_scan(request):
                         'is_reliable': bool(location_details['is_reliable'])
                     }
 
-                # Network verification removed - no longer needed
-
-                # Create attendance report with basic fields
+                # Create attendance report with network verification details
                 attendance_report = AttendanceReport(
                     student_id=student,
                     attendance_id=attendance,
@@ -503,10 +535,13 @@ def student_process_qr_scan(request):
                     student_longitude=student_lon if longitude else None,
                     student_accuracy=float(student_accuracy) if student_accuracy else None,
                     location_verified=bool(location_verified),
-                    verification_details=json_location_details
+                    verification_details=json_location_details,
+                    student_ip_address=student_ip,
+                    student_network_ssid=student_ssid,
+                    network_verified=bool(network_verified),
+                    network_verification_details=network_verification_details
                 )
 
-                # Network verification removed
                 attendance_report.save()
 
                 # Deactivate QR Code after successful attendance marking
@@ -518,7 +553,9 @@ def student_process_qr_scan(request):
                     'message': 'Attendance marked successfully',
                     'subject': qr_code.subject.subject_name,
                     'location_verified': location_verified,
-                    'location_details': location_details if location_details else None
+                    'location_details': location_details if location_details else None,
+                    'network_verified': network_verified,
+                    'network_details': network_verification_details if network_verification_details else None
                 })
 
             except AttendanceQRCode.DoesNotExist:

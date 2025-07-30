@@ -41,7 +41,9 @@ def staff_generate_qr(request):
         teacher_longitude = request.POST.get('longitude')
         allowed_radius = request.POST.get('radius', 10)
 
-        # Network verification removed
+        # Get teacher's network information
+        teacher_ip = get_client_ip(request)
+        teacher_ssid = request.POST.get('network_ssid')  # Will be sent from frontend
 
         print(f"Parsed data - Subject: {subject_id}, Session: {session_year_id}, Expiry: {expiry_minutes}")  # Debug
 
@@ -83,7 +85,10 @@ def staff_generate_qr(request):
                 token=unique_token,
                 teacher_latitude=float(teacher_latitude) if teacher_latitude else None,
                 teacher_longitude=float(teacher_longitude) if teacher_longitude else None,
-                allowed_radius=float(allowed_radius)
+                allowed_radius=float(allowed_radius),
+                teacher_ip_address=teacher_ip,
+                teacher_network_ssid=teacher_ssid,
+                require_same_network=True  # Enable network verification by default
             )
             print("QR code instance created")  # Debug
 

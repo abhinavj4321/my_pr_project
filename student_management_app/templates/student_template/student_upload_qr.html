@@ -509,7 +509,9 @@
             console.log('QR data is not a URL, treating as token:', qrData);
         }
 
-        // Location is now optional - send what we have
+        // Get network SSID from user for verification
+        const networkSSID = prompt("Please enter your WiFi network name (SSID) for network verification:");
+
         $('#scan-error-message').hide();
         $('#scan-success-message').html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing QR code...').show();
 
@@ -521,7 +523,8 @@
             data: JSON.stringify({
                 'token': token,
                 'latitude': currentPosition ? currentPosition.lat : null,
-                'longitude': currentPosition ? currentPosition.lng : null
+                'longitude': currentPosition ? currentPosition.lng : null,
+                'network_ssid': networkSSID ? networkSSID.trim() : null
             }),
             headers: {
                 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
