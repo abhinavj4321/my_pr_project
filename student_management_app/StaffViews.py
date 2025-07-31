@@ -40,7 +40,18 @@ def staff_generate_qr(request):
         expiry_minutes = request.POST.get('expiry_time', 30)
         teacher_latitude = request.POST.get('latitude')
         teacher_longitude = request.POST.get('longitude')
-        allowed_radius = request.POST.get('radius', 10)
+        allowed_radius = request.POST.get('radius', 100)
+
+        # Validate and sanitize radius value
+        try:
+            allowed_radius = float(allowed_radius)
+            # Ensure radius is within reasonable bounds (10m to 1000m)
+            if allowed_radius < 10:
+                allowed_radius = 10
+            elif allowed_radius > 1000:
+                allowed_radius = 1000
+        except (ValueError, TypeError):
+            allowed_radius = 100  # Default fallback
 
         # Get teacher's network information
         teacher_ip = get_client_ip(request)

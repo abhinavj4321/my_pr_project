@@ -399,6 +399,15 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         return;
       }
 
+      // Validate radius value
+      if (enableLocation) {
+        var radiusNum = parseInt(radius);
+        if (isNaN(radiusNum) || radiusNum < 10 || radiusNum > 1000) {
+          alert("Please enter a valid radius between 10 and 1000 meters.");
+          return;
+        }
+      }
+
       // Check if location is enabled but not available
       if (enableLocation && !currentPosition) {
         alert(
@@ -423,6 +432,9 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         requestData.latitude = currentPosition.lat;
         requestData.longitude = currentPosition.lng;
         requestData.radius = radius;
+
+        // Debug: Log the radius value being sent
+        console.log("Sending radius value:", radius, "Type:", typeof radius);
       }
 
       // Add network verification flag

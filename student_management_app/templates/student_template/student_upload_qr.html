@@ -293,14 +293,12 @@
                     // Update hidden form fields
                     $('#latitude').val(currentPosition.lat);
                     $('#longitude').val(currentPosition.lng);
+
+                    // Debug: Log coordinates
+                    console.log("Student coordinates captured:", currentPosition.lat, currentPosition.lng);
                     
-                    // Update status with detailed location info
-                    $('#locationStatus').html(
-                        '<div class="alert alert-success">' +
-                        '<strong>Location detected successfully!</strong><br>' +
-                        '<small>Your coordinates: ' + currentPosition.lat.toFixed(6) + ', ' + currentPosition.lng.toFixed(6) + '</small>' +
-                        '</div>'
-                    );
+                    // Update status
+                    $('#locationStatus').html('<div class="alert alert-success">Location detected successfully!</div>');
                     $('#map_container').show();
                     
                     // Force map to recalculate its size after showing
@@ -385,17 +383,7 @@
                 error: function (xhr, status, error) {
                     try {
                         var response = JSON.parse(xhr.responseText);
-                        let errorMessage = response.message;
-
-                        // Add debug info if available
-                        if (response.debug_info) {
-                            errorMessage += '<br><small><strong>Debug Info:</strong><br>' +
-                                          'Your location: ' + response.debug_info.student_location + '<br>' +
-                                          'Teacher location: ' + response.debug_info.teacher_location + '<br>' +
-                                          'Distance: ' + response.debug_info.distance_calculated + ' meters</small>';
-                        }
-
-                        $("#upload_result").html("<div class='alert alert-danger'>" + errorMessage + "</div>");
+                        $("#upload_result").html("<div class='alert alert-danger'>" + response.message + "</div>");
                     } catch (e) {
                         var errorMessage = xhr.status + ': ' + xhr.statusText;
                         $("#upload_result").html("<div class='alert alert-danger'>Error uploading QR code - " + errorMessage + "</div>");
@@ -556,14 +544,6 @@
                 try {
                     const response = JSON.parse(xhr.responseText);
                     errorMessage = response.message || errorMessage;
-
-                    // Add debug info if available
-                    if (response.debug_info) {
-                        errorMessage += '<br><small><strong>Debug Info:</strong><br>' +
-                                      'Your location: ' + response.debug_info.student_location + '<br>' +
-                                      'Teacher location: ' + response.debug_info.teacher_location + '<br>' +
-                                      'Distance: ' + response.debug_info.distance_calculated + ' meters</small>';
-                    }
                 } catch (e) {
                     console.error('Error parsing response:', e);
                 }
