@@ -112,6 +112,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                     >Enable Location Verification</label
                   >
                 </div>
+                <button type="button" id="refreshTeacherLocation" class="btn btn-sm btn-info mt-2" style="display: none;">🔄 Refresh My Location</button>
                 <div id="locationStatus" class="mt-2"></div>
               </div>
 
@@ -254,9 +255,14 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
           $("#latitude").val(currentPosition.lat);
           $("#longitude").val(currentPosition.lng);
 
-          // Update status
+          // Update status with detailed location info
           $("#locationStatus").html(
-            '<div class="alert alert-success">Location detected successfully!</div>'
+            '<div class="alert alert-success">' +
+            '<strong>Location detected successfully!</strong><br>' +
+            '<small>Coordinates: ' + currentPosition.lat.toFixed(6) + ', ' + currentPosition.lng.toFixed(6) + '<br>' +
+            'Accuracy: ±' + Math.round(currentPosition.accuracy) + 'm<br>' +
+            'Timestamp: ' + new Date(currentPosition.timestamp).toLocaleTimeString() + '</small>' +
+            '</div>'
           );
           $("#map_container").show();
 
@@ -333,6 +339,8 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
     $("#enableLocation").on("change", function () {
       if ($(this).is(":checked")) {
         $("#radius").prop("disabled", false);
+        $("#refreshTeacherLocation").show();
+        getLocation(); // Get fresh location when enabled
         if (currentPosition) {
           $("#map_container").show();
           setTimeout(function () {
@@ -341,8 +349,18 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         }
       } else {
         $("#radius").prop("disabled", true);
+        $("#refreshTeacherLocation").hide();
         $("#map_container").hide();
       }
+    });
+
+    // Refresh teacher location button
+    $("#refreshTeacherLocation").click(function() {
+      $(this).html('🔄 Getting Location...');
+      getLocation();
+      setTimeout(() => {
+        $(this).html('🔄 Refresh My Location');
+      }, 2000);
     });
 
     // Network verification removed
@@ -423,6 +441,16 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         return;
       }
 
+      // Check if location is too old (more than 5 minutes)
+      if (enableLocation && currentPosition && currentPosition.timestamp) {
+        var locationAge = Date.now() - currentPosition.timestamp;
+        var fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+        if (locationAge > fiveMinutes) {
+          alert("Your location data is more than 5 minutes old. Please refresh your location and try again.");
+          return;
+        }
+      }
+
       // Network verification will be IP-based only
 
       // Network verification removed
@@ -440,8 +468,12 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
         requestData.longitude = currentPosition.lng;
         requestData.radius = radius;
 
-        // Debug: Log the radius value being sent
-        console.log("Sending radius value:", radius, "Type:", typeof radius);
+        // Debug: Log the values being sent
+        console.log("Sending QR generation data:");
+        console.log("- Radius:", radius, "Type:", typeof radius);
+        console.log("- Teacher coordinates:", currentPosition.lat, currentPosition.lng);
+        console.log("- Teacher accuracy:", currentPosition.accuracy);
+        console.log("- Timestamp:", new Date(currentPosition.timestamp).toLocaleString());
       }
 
       // Add network verification flag
