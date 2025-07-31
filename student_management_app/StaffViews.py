@@ -45,11 +45,12 @@ def staff_generate_qr(request):
         # Validate and sanitize radius value
         try:
             allowed_radius = float(allowed_radius)
-            # Ensure radius is within reasonable bounds (10m to 1000m)
+            # For testing purposes, allow larger radius (up to 50km)
+            # In production, you might want to limit this to 1000m
             if allowed_radius < 10:
                 allowed_radius = 10
-            elif allowed_radius > 1000:
-                allowed_radius = 1000
+            elif allowed_radius > 50000:  # 50km for testing
+                allowed_radius = 50000
         except (ValueError, TypeError):
             allowed_radius = 100  # Default fallback
 

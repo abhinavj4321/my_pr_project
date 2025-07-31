@@ -88,11 +88,11 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                   name="radius"
                   value="100"
                   min="10"
-                  max="1000"
+                  max="50000"
                 />
                 <small class="form-text text-muted"
                   >Students must be within this distance from your location to
-                  mark attendance.</small
+                  mark attendance. For testing: use 20000 (20km) to allow remote testing.</small
                 >
               </div>
 
@@ -402,8 +402,8 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
       // Validate radius value
       if (enableLocation) {
         var radiusNum = parseInt(radius);
-        if (isNaN(radiusNum) || radiusNum < 10 || radiusNum > 1000) {
-          alert("Please enter a valid radius between 10 and 1000 meters.");
+        if (isNaN(radiusNum) || radiusNum < 10 || radiusNum > 50000) {
+          alert("Please enter a valid radius between 10 and 50000 meters (50km for testing).");
           return;
         }
       }
