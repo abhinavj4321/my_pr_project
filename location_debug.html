@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Debug Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .coordinates {
+            font-family: monospace;
+            font-size: 14px;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Location Debug Tool</h1>
+    <p>This tool will help you debug location issues with the attendance system.</p>
+    
+    <button onclick="getCurrentLocation()">Get My Location</button>
+    <button onclick="calculateDistance()">Calculate Distance to Teacher</button>
+    
+    <div id="status" class="info-box">
+        Click "Get My Location" to start debugging.
+    </div>
+    
+    <div id="location-info" style="display: none;">
+        <h3>Your Location Details:</h3>
+        <div class="coordinates">
+            <strong>Latitude:</strong> <span id="lat"></span><br>
+            <strong>Longitude:</strong> <span id="lng"></span><br>
+            <strong>Accuracy:</strong> <span id="accuracy"></span> meters<br>
+            <strong>Timestamp:</strong> <span id="timestamp"></span>
+        </div>
+    </div>
+    
+    <div id="teacher-info" class="info-box">
+        <h3>Teacher Location (from latest QR code):</h3>
+        <div class="coordinates">
+            <strong>Latitude:</strong> 26.4642449<br>
+            <strong>Longitude:</strong> 80.4437781<br>
+            <strong>Location:</strong> Kanpur, Uttar Pradesh, India (approximate)
+        </div>
+    </div>
+    
+    <div id="distance-info" style="display: none;">
+        <h3>Distance Calculation:</h3>
+        <div class="coordinates">
+            <strong>Distance:</strong> <span id="distance"></span> meters<br>
+            <strong>Distance:</strong> <span id="distance-km"></span> kilometers<br>
+            <strong>Within 100m radius:</strong> <span id="within-radius"></span>
+        </div>
+    </div>
+    
+    <div class="info-box">
+        <h3>Troubleshooting Tips:</h3>
+        <ul>
+            <li><strong>If location permission is denied:</strong> Check your browser settings and allow location access for this site.</li>
+            <li><strong>If accuracy is very low (>100m):</strong> Try moving to an area with better GPS signal (outdoors, away from tall buildings).</li>
+            <li><strong>If you're far from teacher location:</strong> Make sure you're physically near where the teacher created the QR code.</li>
+            <li><strong>If coordinates look wrong:</strong> Try refreshing the page and getting location again.</li>
+        </ul>
+    </div>
+
+    <script>
+        let currentPosition = null;
+        const teacherLat = 26.4642449;
+        const teacherLng = 80.4437781;
+        
+        function getCurrentLocation() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'info-box';
+            statusDiv.innerHTML = 'Requesting location access...';
+            
+            if (!navigator.geolocation) {
+                statusDiv.className = 'info-box error';
+                statusDiv.innerHTML = 'Geolocation is not supported by this browser.';
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentPosition = position;
+                    displayLocationInfo(position);
+                    statusDiv.className = 'info-box success';
+                    statusDiv.innerHTML = 'Location detected successfully!';
+                },
+                function(error) {
+                    statusDiv.className = 'info-box error';
+                    let errorMessage = 'Error getting location: ';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage += 'Location access denied by user.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage += 'Location information is unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage += 'Location request timed out.';
+                            break;
+                        default:
+                            errorMessage += 'An unknown error occurred.';
+                            break;
+                    }
+                    statusDiv.innerHTML = errorMessage;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+        
+        function displayLocationInfo(position) {
+            document.getElementById('lat').textContent = position.coords.latitude.toFixed(6);
+            document.getElementById('lng').textContent = position.coords.longitude.toFixed(6);
+            document.getElementById('accuracy').textContent = Math.round(position.coords.accuracy);
+            document.getElementById('timestamp').textContent = new Date(position.timestamp).toLocaleString();
+            document.getElementById('location-info').style.display = 'block';
+        }
+        
+        function calculateDistance() {
+            if (!currentPosition) {
+                alert('Please get your location first!');
+                return;
+            }
+            
+            const lat1 = currentPosition.coords.latitude;
+            const lng1 = currentPosition.coords.longitude;
+            const lat2 = teacherLat;
+            const lng2 = teacherLng;
+            
+            // Calculate distance using Haversine formula
+            const R = 6371000; // Earth's radius in meters
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distance = R * c;
+            
+            document.getElementById('distance').textContent = Math.round(distance);
+            document.getElementById('distance-km').textContent = (distance / 1000).toFixed(2);
+            document.getElementById('within-radius').textContent = distance <= 100 ? 'YES' : 'NO';
+            document.getElementById('distance-info').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

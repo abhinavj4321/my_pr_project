@@ -202,7 +202,12 @@ def student_upload_qr(request):
                         if not location_verified:
                             return JsonResponse({
                                 'status': 'error',
-                                'message': 'You are not within the allowed radius for attendance'
+                                'message': f'You are not within the allowed radius for attendance. You are {verification_result["distance"]:.2f} meters away from the teacher, but the allowed radius is {verification_result["original_radius"]:.2f} meters.',
+                                'debug_info': {
+                                    'student_location': f'{student_lat:.6f}, {student_lon:.6f}',
+                                    'teacher_location': f'{teacher_lat:.6f}, {teacher_lon:.6f}',
+                                    'distance_calculated': round(verification_result["distance"], 2)
+                                }
                             })
 
                     # Network verification removed - only location-based verification is used
@@ -465,7 +470,12 @@ def student_process_qr_scan(request):
                         return JsonResponse({
                             'status': 'error',
                             'message': f'You are not within the allowed radius for attendance. You are {location_details["distance"]} meters away from the teacher, but the allowed radius is {location_details["allowed_radius"]} meters.',
-                            'location_details': location_details
+                            'location_details': location_details,
+                            'debug_info': {
+                                'student_location': f'{student_lat:.6f}, {student_lon:.6f}',
+                                'teacher_location': f'{teacher_lat:.6f}, {teacher_lon:.6f}',
+                                'distance_calculated': location_details["distance"]
+                            }
                         })
                 else:
                     # If teacher's location is not set, location verification is not required
