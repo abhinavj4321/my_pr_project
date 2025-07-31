@@ -187,6 +187,12 @@ def student_upload_qr(request):
                         teacher_lon = float(qr_code.teacher_longitude)
                         allowed_radius = float(qr_code.allowed_radius)
 
+                        # Debug logging for upload QR
+                        print(f"Upload QR Location verification debug:")
+                        print(f"Student location: {student_lat}, {student_lon}")
+                        print(f"Teacher location: {teacher_lat}, {teacher_lon}")
+                        print(f"Allowed radius: {allowed_radius}")
+
                         # Check if student is within allowed radius
                         from .utils import is_within_radius
 
@@ -195,6 +201,8 @@ def student_upload_qr(request):
                             teacher_lat, teacher_lon,
                             allowed_radius
                         )
+
+                        print(f"Upload QR Verification result: {verification_result}")
 
                         # Extract the boolean value for location verification
                         location_verified = bool(verification_result['is_within'])
@@ -442,8 +450,15 @@ def student_process_qr_scan(request):
                     teacher_lon = float(qr_code.teacher_longitude)
                     allowed_radius = float(qr_code.allowed_radius)
 
+                    # Debug logging
+                    print(f"Location verification debug:")
+                    print(f"Student location: {student_lat}, {student_lon}")
+                    print(f"Teacher location: {teacher_lat}, {teacher_lon}")
+                    print(f"Allowed radius: {allowed_radius}")
+
                     # Get student location accuracy if available
                     student_accuracy = data.get('accuracy', None)
+                    print(f"Student accuracy: {student_accuracy}")
 
                     # Check if student is within allowed radius with enhanced verification
                     verification_result = is_within_radius(
@@ -452,6 +467,8 @@ def student_process_qr_scan(request):
                         allowed_radius,
                         student_accuracy
                     )
+
+                    print(f"Verification result: {verification_result}")
 
                     # Store verification details for the response
                     location_details = {
@@ -462,8 +479,15 @@ def student_process_qr_scan(request):
                         'is_reliable': bool(verification_result['is_reliable'])  # Ensure it's a proper boolean
                     }
 
+                    print(f"Location details: {location_details}")
+
+                    # Check if coordinates are suspiciously identical
+                    if student_lat == teacher_lat and student_lon == teacher_lon:
+                        print("WARNING: Student and teacher coordinates are identical!")
+
                     # Check if student is within radius
                     location_verified = verification_result['is_within']
+                    print(f"Location verified: {location_verified}")
 
                     if not location_verified:
                         # Provide more detailed error message with distance information

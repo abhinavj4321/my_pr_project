@@ -293,9 +293,6 @@
                     // Update hidden form fields
                     $('#latitude').val(currentPosition.lat);
                     $('#longitude').val(currentPosition.lng);
-
-                    // Debug: Log coordinates
-                    console.log("Student coordinates captured:", currentPosition.lat, currentPosition.lng);
                     
                     // Update status
                     $('#locationStatus').html('<div class="alert alert-success">Location detected successfully!</div>');
@@ -363,6 +360,12 @@
             }
 
             var formData = new FormData($("#upload_qr_form")[0]);
+
+            // Debug: Log form data
+            console.log('Upload form data:');
+            console.log('Latitude:', $('#latitude').val());
+            console.log('Longitude:', $('#longitude').val());
+            console.log('Current position:', currentPosition);
 
             // Show loading spinner
             $("#upload_result").html("<div class='spinner-border' role='status'><span class='sr-only'>Loading...</span></div>");
@@ -516,6 +519,12 @@
         $('#scan-success-message').html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing QR code...').show();
 
         // Send scanned QR data to server (IP-based network verification only)
+        console.log('Sending QR scan data:', {
+            token: token,
+            latitude: currentPosition ? currentPosition.lat : null,
+            longitude: currentPosition ? currentPosition.lng : null
+        });
+
         $.ajax({
             url: '{% url "student_process_qr_scan" %}',
             type: 'POST',
