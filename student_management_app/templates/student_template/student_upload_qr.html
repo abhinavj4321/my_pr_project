@@ -49,6 +49,7 @@
 
                     <div class="alert alert-info">
                         <strong>Location Required:</strong> You must allow location access to mark attendance. Your location will be verified against the teacher's location.
+                        <button type="button" id="refreshLocation" class="btn btn-sm btn-info float-right">🔄 Refresh Location</button>
                     </div>
 
                     <div id="locationStatus" class="mb-3"></div>
@@ -277,7 +278,9 @@
                 function(position) {
                     currentPosition = {
                         lat: position.coords.latitude,
-                        lng: position.coords.longitude
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        timestamp: position.timestamp
                     };
                     
                     // Set map view to current position
@@ -294,8 +297,15 @@
                     $('#latitude').val(currentPosition.lat);
                     $('#longitude').val(currentPosition.lng);
                     
-                    // Update status
-                    $('#locationStatus').html('<div class="alert alert-success">Location detected successfully!</div>');
+                    // Update status with detailed location info
+                    $('#locationStatus').html(
+                        '<div class="alert alert-success">' +
+                        '<strong>Location detected successfully!</strong><br>' +
+                        '<small>Coordinates: ' + currentPosition.lat.toFixed(6) + ', ' + currentPosition.lng.toFixed(6) + '<br>' +
+                        'Accuracy: ±' + Math.round(currentPosition.accuracy) + 'm<br>' +
+                        'Timestamp: ' + new Date(currentPosition.timestamp).toLocaleTimeString() + '</small>' +
+                        '</div>'
+                    );
                     $('#map_container').show();
                     
                     // Force map to recalculate its size after showing
@@ -322,6 +332,11 @@
                     }
                     $('#locationStatus').html('<div class="alert alert-danger">' + errorMessage + '</div>');
                     $('#map_container').hide();
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0  // Force fresh location, no cache
                 }
             );
         } else {
@@ -330,11 +345,13 @@
     }
 
     $(document).ready(function () {
-        // Refresh location button
-        $('#locationStatus').append('<button id="refreshLocation" class="btn btn-sm btn-info mt-2">Refresh Location</button>');
-        
+        // Refresh location button handler
         $('#refreshLocation').click(function() {
+            $(this).html('🔄 Getting Location...');
             getLocation();
+            setTimeout(() => {
+                $(this).html('🔄 Refresh Location');
+            }, 2000);
         });
         
         $("#upload_qr_btn").click(function () {
@@ -360,12 +377,6 @@
             }
 
             var formData = new FormData($("#upload_qr_form")[0]);
-
-            // Debug: Log form data
-            console.log('Upload form data:');
-            console.log('Latitude:', $('#latitude').val());
-            console.log('Longitude:', $('#longitude').val());
-            console.log('Current position:', currentPosition);
 
             // Show loading spinner
             $("#upload_result").html("<div class='spinner-border' role='status'><span class='sr-only'>Loading...</span></div>");
@@ -519,12 +530,6 @@
         $('#scan-success-message').html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing QR code...').show();
 
         // Send scanned QR data to server (IP-based network verification only)
-        console.log('Sending QR scan data:', {
-            token: token,
-            latitude: currentPosition ? currentPosition.lat : null,
-            longitude: currentPosition ? currentPosition.lng : null
-        });
-
         $.ajax({
             url: '{% url "student_process_qr_scan" %}',
             type: 'POST',
@@ -533,6 +538,7 @@
                 'token': token,
                 'latitude': currentPosition ? currentPosition.lat : null,
                 'longitude': currentPosition ? currentPosition.lng : null,
+                'accuracy': currentPosition ? currentPosition.accuracy : null,
                 'network_ssid': null  // IP-based verification only
             }),
             headers: {

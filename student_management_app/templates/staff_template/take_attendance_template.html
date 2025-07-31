@@ -230,6 +230,8 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
           currentPosition = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: position.timestamp
           };
 
           // Set map view to current position
@@ -283,6 +285,11 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
           $("#locationStatus").html(
             '<div class="alert alert-danger">' + errorMessage + "</div>"
           );
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0  // Force fresh location, no cache
         }
       );
     } else {
