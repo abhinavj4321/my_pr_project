@@ -796,18 +796,28 @@ def staff_import_attendance_data(request):
                         raise Exception(f"Student with ID '{student_id}' not found")
 
                 # Get or create attendance record for this date
-                attendance, _ = Attendance.objects.get_or_create(
+                attendance, attendance_created = Attendance.objects.get_or_create(
                     subject_id=subject,
                     attendance_date=current_date,
                     session_year_id=session_year
                 )
 
+                if attendance_created:
+                    print(f"Created new attendance record for {subject.subject_name} on {current_date}")
+                else:
+                    print(f"Using existing attendance record for {subject.subject_name} on {current_date}")
+
                 # Create or update attendance report
-                _, _ = AttendanceReport.objects.update_or_create(
+                attendance_report, created = AttendanceReport.objects.update_or_create(
                     student_id=student,
                     attendance_id=attendance,
                     defaults={'status': status}
                 )
+
+                # Log the operation for debugging
+                action = "Created" if created else "Updated"
+                print(f"{action} attendance for {student.admin.username} ({student.admin.first_name} {student.admin.last_name}) on {current_date}: {status}")
+                print(f"  - Attendance ID: {attendance.id}, Student ID: {student.id}, Report ID: {attendance_report.id}")
 
                 success_count += 1
             except Exception as e:
@@ -824,9 +834,29 @@ def staff_import_attendance_data(request):
             elif len(date_list) > 1:
                 dates_message = f" for {len(date_list)} dates from {date_list[0]} to {date_list[-1]}"
 
+        # Verify the import by checking if records exist
+        verification_message = ""
+        if success_count > 0:
+            try:
+                # Check how many attendance reports exist for this subject and date range
+                if processed_dates:
+                    total_reports = AttendanceReport.objects.filter(
+                        attendance_id__subject_id=subject,
+                        attendance_id__attendance_date__in=processed_dates
+                    ).count()
+                else:
+                    import_date = datetime.datetime.strptime(attendance_date, '%Y-%m-%d').date()
+                    total_reports = AttendanceReport.objects.filter(
+                        attendance_id__subject_id=subject,
+                        attendance_id__attendance_date=import_date
+                    ).count()
+                verification_message = f" Verification: {total_reports} total attendance records found in database."
+            except Exception as e:
+                verification_message = f" Verification failed: {str(e)}"
+
         return JsonResponse({
             "status": "success",
-            "message": f"Attendance imported successfully{dates_message}. {success_count} records processed, {error_count} errors."
+            "message": f"Attendance imported successfully{dates_message}. {success_count} records processed, {error_count} errors.{verification_message}"
         })
 
     except Subjects.DoesNotExist:
