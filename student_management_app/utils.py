@@ -233,44 +233,48 @@ def export_attendance_to_excel(attendance_data, subject_name=None, date_range=No
     header_fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
     header_alignment = Alignment(horizontal='center', vertical='center')
 
-    # Add title
-    worksheet.merge_cells('A1:F1')
-    title_cell = worksheet.cell(row=1, column=1)
-    title_cell.value = title
-    title_cell.font = Font(name='Arial', bold=True, size=14)
-    title_cell.alignment = Alignment(horizontal='center', vertical='center')
+    # Only add title and info for student reports, not for teacher reports (import compatibility)
+    if for_student:
+        # Add title
+        worksheet.merge_cells('A1:F1')
+        title_cell = worksheet.cell(row=1, column=1)
+        title_cell.value = title
+        title_cell.font = Font(name='Arial', bold=True, size=14)
+        title_cell.alignment = Alignment(horizontal='center', vertical='center')
 
-    # Add report generation info
-    worksheet.merge_cells('A2:F2')
-    gen_info_cell = worksheet.cell(row=2, column=1)
-    gen_info_cell.value = f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    gen_info_cell.font = Font(italic=True)
-    gen_info_cell.alignment = Alignment(horizontal='center')
+        # Add report generation info
+        worksheet.merge_cells('A2:F2')
+        gen_info_cell = worksheet.cell(row=2, column=1)
+        gen_info_cell.value = f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        gen_info_cell.font = Font(italic=True)
+        gen_info_cell.alignment = Alignment(horizontal='center')
 
     # Define headers based on report type
     if for_student:
         headers = ['Date', 'Subject', 'Status', 'Location Verified', 'Teacher']
+        # Add headers at row 4 for student reports (keep title and info)
+        for col_num, header in enumerate(headers, 1):
+            cell = worksheet.cell(row=4, column=col_num)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        row_num = 5
     else:
         # Use exact column names expected by the import function - keep it simple for import compatibility
         headers = ['Student ID', 'Student Name', 'Date', 'Status']
 
-        # Add a comment row explaining the columns
-        worksheet.merge_cells('A3:D3')
-        comment_cell = worksheet.cell(row=3, column=1)
-        comment_cell.value = "This file can be directly imported without modification. Do not change the column names."
-        comment_cell.font = Font(italic=True)
-        comment_cell.alignment = Alignment(horizontal='left')
+        # For import compatibility, start headers at row 1 (no title or merged cells)
+        # Add headers directly at row 1
+        for col_num, header in enumerate(headers, 1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
 
-    # Add headers
-    for col_num, header in enumerate(headers, 1):
-        cell = worksheet.cell(row=4, column=col_num)
-        cell.value = header
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_alignment
-
-    # Add data rows
-    row_num = 5
+        # Add data rows starting from row 2
+        row_num = 2
     present_count = 0
     absent_count = 0
     location_verified_count = 0

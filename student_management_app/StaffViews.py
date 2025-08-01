@@ -676,11 +676,32 @@ def staff_import_attendance_data(request):
         if subject.staff_id.admin.id != request.user.id:
             return JsonResponse({"status": "error", "message": "You don't have permission to import attendance for this subject."})
 
-        # Parse Excel file
-        df = pd.read_excel(excel_file)
+        # Parse Excel file - try to detect if it has title rows
+        try:
+            # First, try reading from row 0 (no title)
+            df = pd.read_excel(excel_file, header=0)
+            print(f"Excel columns (header=0): {df.columns.tolist()}")
 
-        # Print column names for debugging
-        print(f"Excel columns: {df.columns.tolist()}")
+            # Check if the first column looks like a title (contains spaces and is long)
+            first_col = str(df.columns[0]).strip()
+            if len(first_col) > 20 or 'attendance report' in first_col.lower():
+                # This looks like a title row, try reading from row 3 or 4
+                print("Detected title row, trying header=3")
+                df = pd.read_excel(excel_file, header=3)
+                print(f"Excel columns (header=3): {df.columns.tolist()}")
+
+                # If still looks wrong, try header=4
+                first_col = str(df.columns[0]).strip()
+                if len(first_col) > 20 or 'attendance report' in first_col.lower():
+                    print("Still looks like title, trying header=4")
+                    df = pd.read_excel(excel_file, header=4)
+                    print(f"Excel columns (header=4): {df.columns.tolist()}")
+        except Exception as e:
+            print(f"Error reading Excel: {e}")
+            return JsonResponse({"status": "error", "message": f"Error reading Excel file: {str(e)}"})
+
+        # Print final column names for debugging
+        print(f"Final Excel columns: {df.columns.tolist()}")
 
         # Normalize column names (strip whitespace, convert to lowercase)
         df.columns = [str(col).strip().lower() for col in df.columns]
