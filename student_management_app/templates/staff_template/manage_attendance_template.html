@@ -172,6 +172,107 @@ document.addEventListener("DOMContentLoaded", function(){
     let availableDates = [];
     let selectedAttendanceId = null;
 
+    // Calendar functionality
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        // Set calendar title
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"];
+        calendarTitle.textContent = `${monthNames[month]} ${year}`;
+
+        // Clear previous days
+        calendarDays.innerHTML = '';
+
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Add empty cells for days before month starts
+        for (let i = 0; i < firstDay; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'h-8';
+            calendarDays.appendChild(emptyDay);
+        }
+
+        // Add days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElement = document.createElement('div');
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            dayElement.className = 'h-8 flex items-center justify-center text-sm cursor-pointer rounded hover:bg-gray-100';
+            dayElement.textContent = day;
+            dayElement.dataset.date = dateStr;
+
+            // Check if this date has attendance
+            const hasAttendance = availableDates.find(d => d.attendance_date_raw === dateStr);
+            if (hasAttendance) {
+                dayElement.className += ' bg-green-500 text-white hover:bg-green-600';
+                dayElement.dataset.attendanceId = hasAttendance.id;
+            }
+
+            // Add click handler
+            dayElement.addEventListener('click', function() {
+                if (hasAttendance) {
+                    selectDate(dateStr, hasAttendance.attendance_date, hasAttendance.id);
+                }
+            });
+
+            calendarDays.appendChild(dayElement);
+        }
+    }
+
+    function selectDate(dateStr, formattedDate, attendanceId) {
+        selectedAttendanceId = attendanceId;
+        attendanceDateInput.value = formattedDate;
+        attendanceDateInput.dataset.attendanceId = attendanceId;
+
+        // Update visual selection
+        document.querySelectorAll('#calendarDays div').forEach(day => {
+            day.classList.remove('bg-blue-500', 'text-white');
+            if (day.dataset.attendanceId) {
+                day.className = day.className.replace('bg-blue-500', 'bg-green-500');
+            }
+        });
+
+        const selectedDay = document.querySelector(`[data-date="${dateStr}"]`);
+        if (selectedDay) {
+            selectedDay.classList.remove('bg-green-500');
+            selectedDay.classList.add('bg-blue-500', 'text-white');
+        }
+
+        calendarPopup.classList.add('hidden');
+    }
+
+    // Calendar navigation
+    prevMonthBtn.addEventListener('click', function() {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    });
+
+    nextMonthBtn.addEventListener('click', function() {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    });
+
+    // Show/hide calendar
+    attendanceDateInput.addEventListener('click', function() {
+        if (availableDates.length > 0) {
+            calendarPopup.classList.toggle('hidden');
+            renderCalendar();
+        } else {
+            showMessage('Please select subject and session year first', 'error');
+        }
+    });
+
+    // Hide calendar when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!attendanceDateInput.contains(event.target) && !calendarPopup.contains(event.target)) {
+            calendarPopup.classList.add('hidden');
+        }
+    });
+
     // Load attendance dates when subject and session year are selected
     function loadAttendanceDates() {
         const subjectId = subjectSelect.value;
@@ -189,22 +290,23 @@ document.addEventListener("DOMContentLoaded", function(){
             .then(response => response.json())
             .then(data => {
                 console.log('Attendance dates response:', data);
-                attendanceDateSelect.innerHTML = '<option value="">Select Date</option>';
 
                 if (Array.isArray(data) && data.length > 0) {
-                    data.forEach(date => {
-                        const option = document.createElement('option');
-                        option.value = date.id;
-                        option.textContent = date.attendance_date;
-                        attendanceDateSelect.appendChild(option);
-                    });
+                    availableDates = data;
+                    attendanceDateInput.placeholder = `${data.length} attendance records found - Click to view calendar`;
+                    attendanceDateInput.classList.remove('cursor-not-allowed');
+                    attendanceDateInput.classList.add('cursor-pointer');
                 } else {
                     console.log('No attendance dates found or invalid data format');
-                    const option = document.createElement('option');
-                    option.value = "";
-                    option.textContent = "No attendance records found";
-                    attendanceDateSelect.appendChild(option);
+                    availableDates = [];
+                    attendanceDateInput.placeholder = "No attendance records found";
+                    attendanceDateInput.classList.add('cursor-not-allowed');
+                    attendanceDateInput.classList.remove('cursor-pointer');
                 }
+
+                // Clear previous selection
+                attendanceDateInput.value = '';
+                selectedAttendanceId = null;
             })
             .catch(error => {
                 console.error('Error loading dates:', error);
@@ -222,15 +324,17 @@ document.addEventListener("DOMContentLoaded", function(){
     fetchButton.addEventListener('click', function() {
         const subjectId = subjectSelect.value;
         const sessionYearId = sessionYearSelect.value;
-        const attendanceId = attendanceDateSelect.value;
-        
+        const attendanceId = selectedAttendanceId;
+
         if (!subjectId || !sessionYearId || !attendanceId) {
-            showMessage('Please select all filter criteria', 'error');
+            showMessage('Please select all filter criteria including a date from the calendar', 'error');
             return;
         }
 
         fetchButton.disabled = true;
         fetchButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+
+        console.log('Fetching attendance with:', {subjectId, sessionYearId, attendanceId});
 
         fetch('{% url "get_attendance_student" %}', {
             method: 'POST',
@@ -240,8 +344,15 @@ document.addEventListener("DOMContentLoaded", function(){
             },
             body: `subject_id=${subjectId}&session_year_id=${sessionYearId}&attendance_id=${attendanceId}`
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Attendance data received:', data);
             displayAttendanceRecords(data);
             attendanceSection.style.display = 'block';
             fetchButton.disabled = false;
@@ -249,7 +360,7 @@ document.addEventListener("DOMContentLoaded", function(){
         })
         .catch(error => {
             console.error('Error loading attendance:', error);
-            showMessage('Error loading attendance records', 'error');
+            showMessage(`Error loading attendance records: ${error.message}`, 'error');
             fetchButton.disabled = false;
             fetchButton.innerHTML = '<i class="fas fa-search mr-2"></i>Load Attendance';
         });
@@ -313,7 +424,7 @@ document.addEventListener("DOMContentLoaded", function(){
     saveButton.addEventListener('click', function() {
         const formData = new FormData();
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        formData.append('attendance_date', attendanceDateSelect.value);
+        formData.append('attendance_date', selectedAttendanceId);
 
         const studentInputs = document.querySelectorAll('input[name="student_id"]');
         const studentData = [];

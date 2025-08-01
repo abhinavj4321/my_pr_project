@@ -436,23 +436,49 @@ def get_attendance_dates(request):
 
 @csrf_exempt
 def get_attendance_student(request):
-    attendance_id = request.POST.get('attendance_id')
-    attendance = Attendance.objects.get(id=attendance_id)
+    try:
+        attendance_id = request.POST.get('attendance_id')
+        print(f"get_attendance_student called with attendance_id: {attendance_id}")
 
-    attendance_data = AttendanceReport.objects.filter(attendance_id=attendance)
-    list_data = []
+        if not attendance_id:
+            print("No attendance_id provided")
+            return JsonResponse([], safe=False)
 
-    for student in attendance_data:
-        # Include location_verified field in the response
-        data_small={
-            "id": student.student_id.admin.id,
-            "name": student.student_id.admin.first_name+" "+student.student_id.admin.last_name,
-            "status": student.status,
-            "location_verified": student.location_verified
-        }
-        list_data.append(data_small)
+        attendance = Attendance.objects.get(id=attendance_id)
+        print(f"Found attendance record: {attendance}")
+    except Attendance.DoesNotExist:
+        print(f"Attendance with id {attendance_id} not found")
+        return JsonResponse([], safe=False)
+    except Exception as e:
+        print(f"Error in get_attendance_student: {str(e)}")
+        return JsonResponse([], safe=False)
 
-    return JsonResponse(list_data, safe=False)
+    try:
+        attendance_data = AttendanceReport.objects.filter(attendance_id=attendance)
+        print(f"Found {attendance_data.count()} attendance records")
+
+        list_data = []
+
+        for student in attendance_data:
+            try:
+                # Include location_verified field in the response
+                data_small={
+                    "id": student.student_id.admin.id,
+                    "name": student.student_id.admin.first_name+" "+student.student_id.admin.last_name,
+                    "status": student.status,
+                    "location_verified": student.location_verified
+                }
+                list_data.append(data_small)
+            except Exception as e:
+                print(f"Error processing student {student.id}: {str(e)}")
+                continue
+
+        print(f"Returning {len(list_data)} student records")
+        return JsonResponse(list_data, safe=False)
+
+    except Exception as e:
+        print(f"Error getting attendance data: {str(e)}")
+        return JsonResponse([], safe=False)
 
 
 @csrf_exempt
