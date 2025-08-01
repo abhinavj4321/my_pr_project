@@ -15,7 +15,7 @@
                 the exact format from the export function.
               </p>
               <p>
-                <strong>Required columns:</strong>
+                <strong>Required columns (exact names):</strong>
               </p>
               <ul>
                 <li>
@@ -26,14 +26,19 @@
                   <strong>Student Name</strong> - The name of the student (for
                   reference only)
                 </li>
+                <li><strong>Date</strong> - Date in YYYY-MM-DD format (optional, will use selected date if not provided)</li>
                 <li><strong>Status</strong> - Must be 'Present' or 'Absent'</li>
               </ul>
               <p>
                 <strong>Important:</strong> The recommended way is to
-                <a href="{% url 'staff_export_attendance' %}" class="alert-link">export attendance</a
-                >
+                <a href="{% url 'staff_export_attendance' %}" class="alert-link">export attendance</a>
                 first, modify the Status column as needed, and then import it
                 back. This ensures the columns and format match exactly.
+              </p>
+              <p>
+                <strong>Alternative:</strong> You can also
+                <a href="{% url 'staff_download_import_template' %}" class="alert-link">download a blank Excel template</a>
+                with the correct column headers and sample data.
               </p>
               <p>
                 The date will be set to the date you select below, regardless of
@@ -169,6 +174,28 @@
     $(".custom-file-input").on("change", function () {
       var fileName = $(this).val().split("\\").pop();
       $(this).next(".custom-file-label").html(fileName);
+    });
+
+    // Download template functionality
+    $("#download-template").on("click", function (e) {
+      e.preventDefault();
+
+      // Create a simple CSV template with the exact column headers
+      const csvContent = "Student ID,Student Name,Date,Status\n" +
+                        "student1,John Doe,2024-01-15,Present\n" +
+                        "student2,Jane Smith,2024-01-15,Absent\n" +
+                        "student3,Bob Johnson,2024-01-15,Present\n";
+
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'attendance_import_template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     });
 
     // Handle form submission

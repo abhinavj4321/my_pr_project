@@ -13,9 +13,12 @@ import datetime
 import uuid
 import qrcode
 import os
+import tempfile
 from io import BytesIO
 from django.core.files.base import ContentFile
 from django.core.cache import cache
+import openpyxl
+import openpyxl.styles
 
 # Try to import pandas, but handle the case where it's not installed
 try:
@@ -683,13 +686,28 @@ def staff_import_attendance_data(request):
         df.columns = [str(col).strip().lower() for col in df.columns]
 
         # Check if required columns exist (case-insensitive)
+        # Map expected column names to actual column names found in the file
+        column_mapping = {}
         required_columns = ['student id', 'student name', 'status']
-        for col in required_columns:
-            if col not in df.columns:
-                return JsonResponse({"status": "error", "message": f"Column '{col}' is missing in the Excel file. Available columns: {', '.join(df.columns.tolist())}. Please use the export function to get the correct format."})
+
+        for required_col in required_columns:
+            found = False
+            for actual_col in df.columns:
+                if actual_col == required_col:
+                    column_mapping[required_col] = actual_col
+                    found = True
+                    break
+            if not found:
+                return JsonResponse({"status": "error", "message": f"Column '{required_col}' is missing in the Excel file. Available columns: {', '.join(df.columns.tolist())}. Please use the export function to get the correct format."})
 
         # Check if Date column exists - it's optional but useful
-        has_date_column = 'date' in df.columns
+        has_date_column = False
+        date_column_name = None
+        for col in df.columns:
+            if col == 'date':
+                has_date_column = True
+                date_column_name = col
+                break
 
         # Create or get attendance record
         attendance, _ = Attendance.objects.get_or_create(
@@ -705,17 +723,17 @@ def staff_import_attendance_data(request):
 
         for _, row in df.iterrows():
             try:
-                # Get student ID from the Excel file (using lowercase column name)
-                student_id_raw = row['student id']
+                # Get student ID from the Excel file using the mapped column name
+                student_id_raw = row[column_mapping['student id']]
                 # Convert to string and strip any whitespace
                 student_id = str(student_id_raw).strip()
 
                 # Get date from the row if available, otherwise use the provided date
                 row_date = None
-                if has_date_column and not pd.isna(row['date']):
+                if has_date_column and date_column_name and not pd.isna(row[date_column_name]):
                     try:
                         # Try to parse the date from the Excel file
-                        row_date = pd.to_datetime(row['date']).date()
+                        row_date = pd.to_datetime(row[date_column_name]).date()
                         processed_dates.add(row_date)
                     except:
                         # If date parsing fails, use the provided date
@@ -725,7 +743,7 @@ def staff_import_attendance_data(request):
                 current_date = row_date or datetime.datetime.strptime(attendance_date, '%Y-%m-%d').date()
 
                 # Handle different status formats (boolean, string, or numeric)
-                status_value = row['status']
+                status_value = row[column_mapping['status']]
                 if isinstance(status_value, str):
                     # Handle string values like 'Present' or 'Absent'
                     status = status_value.lower() in ['present', 'yes', 'true', '1']
@@ -787,6 +805,62 @@ def staff_import_attendance_data(request):
         return JsonResponse({"status": "error", "message": "Session year not found."})
     except Exception as e:
         return JsonResponse({"status": "error", "message": f"Error importing attendance: {str(e)}"})
+
+
+def staff_download_import_template(request):
+    """Download a blank Excel template for attendance import"""
+    try:
+        # Create a new workbook
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Attendance Import Template"
+
+        # Add headers that match exactly what the import function expects
+        headers = ['Student ID', 'Student Name', 'Date', 'Status']
+        for col_num, header in enumerate(headers, 1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = openpyxl.styles.Font(bold=True)
+
+        # Add sample data rows
+        sample_data = [
+            ['student1', 'John Doe', '2024-01-15', 'Present'],
+            ['student2', 'Jane Smith', '2024-01-15', 'Absent'],
+            ['student3', 'Bob Johnson', '2024-01-15', 'Present']
+        ]
+
+        for row_num, row_data in enumerate(sample_data, 2):
+            for col_num, value in enumerate(row_data, 1):
+                worksheet.cell(row=row_num, column=col_num).value = value
+
+        # Add instructions
+        worksheet.cell(row=6, column=1).value = "Instructions:"
+        worksheet.cell(row=6, column=1).font = openpyxl.styles.Font(bold=True)
+        worksheet.cell(row=7, column=1).value = "1. Replace sample data with actual student data"
+        worksheet.cell(row=8, column=1).value = "2. Student ID must match the username in the system"
+        worksheet.cell(row=9, column=1).value = "3. Date format: YYYY-MM-DD (optional)"
+        worksheet.cell(row=10, column=1).value = "4. Status must be 'Present' or 'Absent'"
+        worksheet.cell(row=11, column=1).value = "5. Do not change the column headers"
+
+        # Save to temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
+        workbook.save(temp_file.name)
+
+        # Read file content
+        with open(temp_file.name, 'rb') as f:
+            file_content = f.read()
+
+        # Clean up
+        os.unlink(temp_file.name)
+
+        # Return file response
+        response = HttpResponse(file_content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="attendance_import_template.xlsx"'
+        return response
+
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": f"Error generating template: {str(e)}"})
+
 
 @csrf_exempt
 def staff_export_attendance_data(request):

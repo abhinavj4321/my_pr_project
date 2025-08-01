@@ -70,6 +70,7 @@ urlpatterns = [
     path('staff_export_attendance_data/', StaffViews.staff_export_attendance_data, name="staff_export_attendance_data"),
     path('staff_import_attendance/', StaffViews.staff_import_attendance, name="staff_import_attendance"),
     path('staff_import_attendance_data/', StaffViews.staff_import_attendance_data, name="staff_import_attendance_data"),
+    path('staff_download_import_template/', StaffViews.staff_download_import_template, name="staff_download_import_template"),
     path('delete_attendance/', StaffViews.delete_attendance, name="delete_attendance"),
 
     path('student_home/', StudentViews.student_home, name="student_home"),
