@@ -312,28 +312,30 @@ def export_attendance_to_excel(attendance_data, subject_name=None, date_range=No
 
         row_num += 1
 
-    # Add statistics section
-    row_num += 2  # Add some space
+    # Only add statistics for student reports, not for teacher reports (import compatibility)
+    if for_student:
+        # Add statistics section
+        row_num += 2  # Add some space
 
-    worksheet.cell(row=row_num, column=1).value = "Statistics"
-    worksheet.cell(row=row_num, column=1).font = Font(bold=True)
+        worksheet.cell(row=row_num, column=1).value = "Statistics"
+        worksheet.cell(row=row_num, column=1).font = Font(bold=True)
 
-    worksheet.cell(row=row_num+1, column=1).value = "Total Records:"
-    worksheet.cell(row=row_num+1, column=2).value = len(attendance_data)
+        worksheet.cell(row=row_num+1, column=1).value = "Total Records:"
+        worksheet.cell(row=row_num+1, column=2).value = len(attendance_data)
 
-    worksheet.cell(row=row_num+2, column=1).value = "Present Count:"
-    worksheet.cell(row=row_num+2, column=2).value = present_count
+        worksheet.cell(row=row_num+2, column=1).value = "Present Count:"
+        worksheet.cell(row=row_num+2, column=2).value = present_count
 
-    worksheet.cell(row=row_num+3, column=1).value = "Absent Count:"
-    worksheet.cell(row=row_num+3, column=2).value = absent_count
+        worksheet.cell(row=row_num+3, column=1).value = "Absent Count:"
+        worksheet.cell(row=row_num+3, column=2).value = absent_count
 
-    worksheet.cell(row=row_num+4, column=1).value = "Location Verified Count:"
-    worksheet.cell(row=row_num+4, column=2).value = location_verified_count
+        worksheet.cell(row=row_num+4, column=1).value = "Location Verified Count:"
+        worksheet.cell(row=row_num+4, column=2).value = location_verified_count
 
-    if present_count > 0:
-        location_verification_rate = (location_verified_count / present_count) * 100
-        worksheet.cell(row=row_num+5, column=1).value = "Location Verification Rate:"
-        worksheet.cell(row=row_num+5, column=2).value = f"{location_verification_rate:.2f}%"
+        if present_count > 0:
+            location_verification_rate = (location_verified_count / present_count) * 100
+            worksheet.cell(row=row_num+5, column=1).value = "Location Verification Rate:"
+            worksheet.cell(row=row_num+5, column=2).value = f"{location_verification_rate:.2f}%"
 
     # Auto-adjust column widths - Fixed to handle merged cells
     for i, column in enumerate(worksheet.columns, 1):

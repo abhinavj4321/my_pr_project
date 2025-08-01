@@ -746,6 +746,11 @@ def staff_import_attendance_data(request):
             try:
                 # Get student ID from the Excel file using the mapped column name
                 student_id_raw = row[column_mapping['student id']]
+
+                # Skip empty rows or invalid data
+                if pd.isna(student_id_raw) or str(student_id_raw).strip() == '' or str(student_id_raw).strip().lower() in ['nan', 'statistics', 'total records:', 'present count:', 'absent count:', 'location verified count:', 'location verification rate:']:
+                    continue
+
                 # Convert to string and strip any whitespace
                 student_id = str(student_id_raw).strip()
 
@@ -775,15 +780,19 @@ def staff_import_attendance_data(request):
                     # Default to boolean conversion
                     status = bool(status_value)
 
-                # Get student object - try to find by admin_id (which is the CustomUser ID)
+                # Get student object - prioritize username lookup since that's what we export
                 try:
-                    student = Students.objects.get(admin_id=student_id)
-                except Students.DoesNotExist:
-                    # If not found by admin_id, try to find by username
+                    # First try to find by username (most common case)
+                    custom_user = CustomUser.objects.get(username=str(student_id))
+                    student = Students.objects.get(admin=custom_user)
+                except (CustomUser.DoesNotExist, Students.DoesNotExist):
+                    # If not found by username, try to find by admin_id (if it's a number)
                     try:
-                        custom_user = CustomUser.objects.get(username=str(student_id))
-                        student = Students.objects.get(admin=custom_user)
-                    except (CustomUser.DoesNotExist, Students.DoesNotExist):
+                        if str(student_id).isdigit():
+                            student = Students.objects.get(admin_id=int(student_id))
+                        else:
+                            raise Exception(f"Student with username '{student_id}' not found")
+                    except (Students.DoesNotExist, ValueError):
                         raise Exception(f"Student with ID '{student_id}' not found")
 
                 # Get or create attendance record for this date
