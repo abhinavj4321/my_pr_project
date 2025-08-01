@@ -47,12 +47,17 @@
                         <h3 class="card-title">Staff Details</h3>
 
                         <div class="card-tools">
-                            <div class="input-group input-group-sm" style="width: 150px;">
-                                <input type="text" name="table_search" class="form-control" placeholder="Search">
-                                <div class="input-group-append">
-                                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                            <form method="GET" action="{% url 'manage_staff' %}">
+                                <div class="input-group input-group-sm" style="width: 200px;">
+                                    <input type="text" name="search" class="form-control" placeholder="Search staff..." value="{{ request.GET.search }}">
+                                    <div class="input-group-append">
+                                        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                                        {% if request.GET.search %}
+                                            <a href="{% url 'manage_staff' %}" class="btn btn-secondary"><i class="fas fa-times"></i></a>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
                     <div class="card-body table-responsive p-0">

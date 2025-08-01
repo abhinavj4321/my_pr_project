@@ -5,6 +5,7 @@ from django.core.files.storage import FileSystemStorage
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
+from django.db.models import Q
 import json
 from datetime import datetime, timedelta
 
@@ -112,9 +113,24 @@ def add_staff_save(request):
 
 
 def manage_staff(request):
-    staffs = Staffs.objects.all()
+    # Get search query from GET parameters
+    search_query = request.GET.get('search', '')
+
+    # Filter staff based on search query
+    if search_query:
+        staffs = Staffs.objects.filter(
+            Q(admin__first_name__icontains=search_query) |
+            Q(admin__last_name__icontains=search_query) |
+            Q(admin__username__icontains=search_query) |
+            Q(admin__email__icontains=search_query) |
+            Q(address__icontains=search_query)
+        ).distinct()
+    else:
+        staffs = Staffs.objects.all()
+
     context = {
-        "staffs": staffs
+        "staffs": staffs,
+        "search_query": search_query
     }
     return render(request, "hod_template/manage_staff_template.html", context)
 
@@ -195,9 +211,20 @@ def add_course_save(request):
 
 
 def manage_course(request):
-    courses = Courses.objects.all()
+    # Get search query from GET parameters
+    search_query = request.GET.get('search', '')
+
+    # Filter courses based on search query
+    if search_query:
+        courses = Courses.objects.filter(
+            Q(course_name__icontains=search_query)
+        ).distinct()
+    else:
+        courses = Courses.objects.all()
+
     context = {
-        "courses": courses
+        "courses": courses,
+        "search_query": search_query
     }
     return render(request, 'hod_template/manage_course_template.html', context)
 
@@ -394,9 +421,25 @@ def add_student_save(request):
 
 
 def manage_student(request):
-    students = Students.objects.all()
+    # Get search query from GET parameters
+    search_query = request.GET.get('search', '')
+
+    # Filter students based on search query
+    if search_query:
+        students = Students.objects.filter(
+            Q(admin__first_name__icontains=search_query) |
+            Q(admin__last_name__icontains=search_query) |
+            Q(admin__username__icontains=search_query) |
+            Q(admin__email__icontains=search_query) |
+            Q(address__icontains=search_query) |
+            Q(course_id__course_name__icontains=search_query)
+        ).distinct()
+    else:
+        students = Students.objects.all()
+
     context = {
-        "students": students
+        "students": students,
+        "search_query": search_query
     }
     return render(request, 'hod_template/manage_student_template.html', context)
 
