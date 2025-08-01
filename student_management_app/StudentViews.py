@@ -522,6 +522,11 @@ def student_process_qr_scan(request):
                 cache_key = f"qr_network_{token}"
                 network_info = cache.get(cache_key)
 
+                print(f"Network verification debug:")
+                print(f"- Cache key: {cache_key}")
+                print(f"- Network info from cache: {network_info}")
+                print(f"- Student IP: {student_ip}")
+
                 if network_info and network_info.get('require_network_verification'):
                     teacher_ip = network_info.get('teacher_ip')
                     teacher_ssid = network_info.get('teacher_ssid')
@@ -553,6 +558,7 @@ def student_process_qr_scan(request):
                         })
                 else:
                     # Network verification not required or no network info available
+                    print("Network verification skipped - not required or no network info available")
                     network_verified = True
 
                 # Create attendance report with enhanced location details
