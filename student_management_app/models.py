@@ -127,6 +127,14 @@ class AttendanceReport(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     objects = models.Manager()
 
+    class Meta:
+        # Ensure one attendance record per student per attendance session
+        unique_together = ('student_id', 'attendance_id')
+
+    def __str__(self):
+        status_text = "Present" if self.status else "Absent"
+        return f"{self.student_id.admin.username} - {self.attendance_id.subject_id.subject_name} ({self.attendance_id.attendance_date}) - {status_text}"
+
 # ✅ Student Result Model
 class StudentResult(models.Model):
     id = models.AutoField(primary_key=True)

@@ -323,23 +323,46 @@ def save_attendance_data(request):
     json_student = json.loads(student_ids)
 
     try:
+        # Check if attendance already exists for this date and subject
+        existing_attendance = Attendance.objects.filter(
+            subject_id=subject_model,
+            attendance_date=attendance_date,
+            session_year_id=session_year_model
+        ).first()
+
+        if existing_attendance:
+            return HttpResponse("Error: Attendance already exists for this date and subject")
+
         attendance = Attendance(subject_id=subject_model, attendance_date=attendance_date, session_year_id=session_year_model)
         attendance.save()
 
         for stud in json_student:
             student = Students.objects.get(admin=stud['id'])
-            # For manually taken attendance, set location_verified to True if the student is present
-            location_verified = stud['status'] == 1  # True if present, False if absent
-            attendance_report = AttendanceReport(
+
+            # Check if attendance report already exists for this student and attendance
+            existing_report = AttendanceReport.objects.filter(
                 student_id=student,
-                attendance_id=attendance,
-                status=stud['status'],
-                location_verified=location_verified  # Set location verification status
-            )
-            attendance_report.save()
+                attendance_id=attendance
+            ).first()
+
+            if existing_report:
+                # Update existing record instead of creating duplicate
+                existing_report.status = stud['status']
+                existing_report.location_verified = stud['status'] == 1
+                existing_report.save()
+            else:
+                # Create new record
+                location_verified = stud['status'] == 1  # True if present, False if absent
+                attendance_report = AttendanceReport(
+                    student_id=student,
+                    attendance_id=attendance,
+                    status=stud['status'],
+                    location_verified=location_verified
+                )
+                attendance_report.save()
         return HttpResponse("OK")
-    except:
-        return HttpResponse("Error")
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}")
 
 
 
