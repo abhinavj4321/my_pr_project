@@ -1,11 +1,19 @@
-{% extends 'student_template/base_template.html' %} {% block page_title %} Scan
-QR Code {% endblock page_title %} {% block custom_css %}
+{% extends 'student_template/base_template.html' %}
+{% load static %}
+
+{% block page_title %}
+Scan QR Code
+{% endblock page_title %}
+
+{% block custom_css %}
 <link rel="stylesheet" href="{% static 'dist/css/qrscanner.css' %}" />
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
 />
-{% endblock custom_css %} {% block main_content %} {% load static %}
+{% endblock custom_css %}
+
+{% block main_content %}
 
 <section class="content">
   <div class="container-fluid">
