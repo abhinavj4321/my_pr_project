@@ -60,10 +60,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                 name="session_year_id"
                 id="session_year_id"
               >
-                {% for session_year in session_years %}
-                <option value="{{ session_year.id }}">{{ session_year.session_start_year }} to {{session_year.session_end_year }}
-                </option>
-                {% endfor %}
+                {% for session_year in session_years %}<option value="{{ session_year.id }}">{{ session_year.session_start_year|date:"Y" }} to {{ session_year.session_end_year|date:"Y" }}</option>{% endfor %}
               </select>
             </div>
           </div>
