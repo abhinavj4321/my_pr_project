@@ -51,12 +51,6 @@
       <span>View Attendance</span>
     </a>
 
-    <a href="{% url 'staff_generate_qr' %}"
-       class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/staff/generate-qr/' %}bg-blue-600 text-white{% endif %}">
-      <i class="fas fa-qrcode w-5"></i>
-      <span>Generate QR Code</span>
-    </a>
-
     <a href="{% url 'staff_export_attendance' %}"
        class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/staff/export-attendance/' %}bg-blue-600 text-white{% endif %}">
       <i class="fas fa-file-export w-5"></i>
@@ -73,18 +67,6 @@
        class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/staff/add-result/' %}bg-blue-600 text-white{% endif %}">
       <i class="fas fa-chart-line w-5"></i>
       <span>Add Result</span>
-    </a>
-
-    <a href="{% url 'staff_apply_leave' %}"
-       class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/staff/apply-leave/' %}bg-blue-600 text-white{% endif %}">
-      <i class="fas fa-envelope-open-text w-5"></i>
-      <span>Apply for Leave</span>
-    </a>
-
-    <a href="{% url 'staff_feedback' %}"
-       class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/staff/feedback/' %}bg-blue-600 text-white{% endif %}">
-      <i class="fas fa-comments w-5"></i>
-      <span>Feedback</span>
     </a>
 
     <a href="{% url 'staff_profile' %}"
