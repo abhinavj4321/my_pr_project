@@ -392,10 +392,14 @@ def staff_view_attendance(request):
 @csrf_exempt
 def get_attendance_dates(request):
     # Get parameters from request
-    subject_id = request.POST.get("subject")
+    subject_id = request.POST.get("subject_id")
     session_year = request.POST.get("session_year_id")
 
     try:
+        # Validate parameters
+        if not subject_id or not session_year:
+            return JsonResponse(json.dumps([]), content_type="application/json", safe=False)
+
         # Get the Staff instance linked to the logged-in user
         staff_instance = Staffs.objects.get(admin=request.user)
 
@@ -405,8 +409,13 @@ def get_attendance_dates(request):
 
         # Get attendance records for this subject and session
         attendance = Attendance.objects.filter(subject_id=subject_model, session_year_id=session_model)
-    except Subjects.DoesNotExist:
-        # If subject doesn't exist or doesn't belong to this staff
+
+    except (Subjects.DoesNotExist, SessionYearModel.DoesNotExist, Staffs.DoesNotExist, ValueError):
+        # If any model doesn't exist or invalid data
+        return JsonResponse(json.dumps([]), content_type="application/json", safe=False)
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error in get_attendance_dates: {str(e)}")
         return JsonResponse(json.dumps([]), content_type="application/json", safe=False)
 
     list_data = []
@@ -427,8 +436,8 @@ def get_attendance_dates(request):
 
 @csrf_exempt
 def get_attendance_student(request):
-    attendance_date = request.POST.get('attendance_date')
-    attendance = Attendance.objects.get(id=attendance_date)
+    attendance_id = request.POST.get('attendance_id')
+    attendance = Attendance.objects.get(id=attendance_id)
 
     attendance_data = AttendanceReport.objects.filter(attendance_id=attendance)
     list_data = []
