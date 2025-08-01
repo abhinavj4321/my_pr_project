@@ -56,7 +56,7 @@
                             <div class="form-group">
                                 <label>Session Year</label>
                                 <select class="form-control custom-select" name="session_year" id="session_year">
-                                    {% for session_year in session_years %}<option value="{{ session_year.id }}">{{ session_year.session_start_year|date:"Y" }} to {{ session_year.session_end_year|date:"Y" }}</option>{% endfor %}
+                                    {% for session_year in session_years %}<option value="{{ session_year.id }}">{{ session_year.session_start_year }} to {{ session_year.session_end_year }}</option>{% endfor %}
                                 </select>
                             </div>
                         </div>
