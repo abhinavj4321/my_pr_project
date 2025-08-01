@@ -1,5 +1,4 @@
-{% extends 'staff_template/base_template.html' %} {% block page_title %} Import
-Attendance {% endblock page_title %} {% block main_content %} {% load static %}
+{% extends 'staff_template/base_template.html' %} {% block page_title %} Import Attendance {% endblock page_title %} {% block main_content %} {% load static %}
 
 <section class="content">
   <div class="container-fluid">
@@ -31,8 +30,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
               </ul>
               <p>
                 <strong>Important:</strong> The recommended way is to
-                <a href="{% url 'staff_export_attendance' %}" class="alert-link"
-                  >export attendance</a
+                <a href="{% url 'staff_export_attendance' %}" class="alert-link">export attendance</a
                 >
                 first, modify the Status column as needed, and then import it
                 back. This ensures the columns and format match exactly.
@@ -100,10 +98,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                   id="session_year"
                   required
                 >
-                  {% for session_year in session_years %}
-                  <option value="{{ session_year.id }}">
-                    {{ session_year.session_start_year }} to {{
-                    session_year.session_end_year }}
+                  {% for session_year in session_years %}<option value="{{ session_year.id }}">{{ session_year.session_start_year }} to {{session_year.session_end_year }}
                   </option>
                   {% endfor %}
                 </select>
