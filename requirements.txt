@@ -24,4 +24,4 @@ whitenoise==6.8.2
 
 # Database for deployment
 dj-database-url==2.2.0
-psycopg2-binary==2.9.9
+psycopg==3.2.3
