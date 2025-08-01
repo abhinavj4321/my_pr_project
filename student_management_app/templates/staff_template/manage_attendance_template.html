@@ -244,28 +244,28 @@ document.addEventListener("DOMContentLoaded", function(){
     saveButton.addEventListener('click', function() {
         const formData = new FormData();
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        formData.append('attendance_id', attendanceDateSelect.value);
-        
+        formData.append('attendance_date', attendanceDateSelect.value);
+
         const studentInputs = document.querySelectorAll('input[name="student_id"]');
         const studentData = [];
-        
+
         studentInputs.forEach(input => {
             const studentId = input.value;
             const statusRadio = document.querySelector(`input[name="status_${studentId}"]:checked`);
             if (statusRadio) {
                 studentData.push({
                     id: studentId,
-                    status: statusRadio.value
+                    status: parseInt(statusRadio.value)
                 });
             }
         });
-        
+
         formData.append('student_ids', JSON.stringify(studentData));
         
         saveButton.disabled = true;
         saveButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Saving...';
         
-        fetch('{% url "save_update_attendance" %}', {
+        fetch('{% url "update_attendance_data" %}', {
             method: 'POST',
             body: formData
         })
