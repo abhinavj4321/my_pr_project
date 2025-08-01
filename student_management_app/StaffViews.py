@@ -59,7 +59,11 @@ def staff_generate_qr(request):
 
         # Get teacher's network information
         teacher_ip = get_client_ip(request)
-        enable_network_verification = request.POST.get('enable_network_verification', False)
+        enable_network_verification = request.POST.get('enableNetwork') == 'on'
+
+        print(f"Network verification settings:")
+        print(f"- Teacher IP: {teacher_ip}")
+        print(f"- Enable network verification: {enable_network_verification}")
 
         print(f"Parsed data - Subject: {subject_id}, Session: {session_year_id}, Expiry: {expiry_minutes}")  # Debug
 
