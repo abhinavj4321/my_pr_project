@@ -45,9 +45,59 @@ Manage Attendance
                     
                     <div>
                         <label for="attendance_date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                        <select name="attendance_date" id="attendance_date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                            <option value="">Select Date</option>
-                        </select>
+                        <div class="relative">
+                            <input type="text" id="attendance_date" name="attendance_date" readonly
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+                                   placeholder="Click to select date" required>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i class="fas fa-calendar-alt text-gray-400"></i>
+                            </div>
+                        </div>
+
+                        <!-- Calendar Popup -->
+                        <div id="calendarPopup" class="absolute z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden" style="width: 300px;">
+                            <div class="p-4">
+                                <!-- Calendar Header -->
+                                <div class="flex items-center justify-between mb-4">
+                                    <button type="button" id="prevMonth" class="p-1 hover:bg-gray-100 rounded">
+                                        <i class="fas fa-chevron-left text-gray-600"></i>
+                                    </button>
+                                    <h3 id="calendarTitle" class="text-lg font-semibold text-gray-900"></h3>
+                                    <button type="button" id="nextMonth" class="p-1 hover:bg-gray-100 rounded">
+                                        <i class="fas fa-chevron-right text-gray-600"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Calendar Grid -->
+                                <div class="grid grid-cols-7 gap-1 mb-2">
+                                    <div class="text-center text-xs font-medium text-gray-500 py-2">Sun</div>
+                                    <div class="text-center text-xs font-medium text-gray-500 py-2">Mon</div>
+                                    <div class="text-center text-xs font-medium text-gray-500 py-2">Tue</div>
+                                    <div class="text-center text-xs font-medium text-gray-500 py-2">Wed</div>
+                                    <div class="text-center text-xs font-medium text-gray-500 py-2">Thu</div>
+                                    <div class="text-center text-xs font-medium text-gray-500 py-2">Fri</div>
+                                    <div class="text-center text-xs font-medium text-gray-500 py-2">Sat</div>
+                                </div>
+
+                                <div id="calendarDays" class="grid grid-cols-7 gap-1">
+                                    <!-- Calendar days will be populated here -->
+                                </div>
+
+                                <!-- Legend -->
+                                <div class="mt-4 pt-3 border-t border-gray-200">
+                                    <div class="flex items-center justify-center space-x-4 text-xs">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 bg-green-500 rounded mr-1"></div>
+                                            <span class="text-gray-600">Attendance Available</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 bg-blue-500 rounded mr-1"></div>
+                                            <span class="text-gray-600">Selected</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -105,13 +155,22 @@ Manage Attendance
 document.addEventListener("DOMContentLoaded", function(){
     const subjectSelect = document.getElementById("subject");
     const sessionYearSelect = document.getElementById("session_year");
-    const attendanceDateSelect = document.getElementById("attendance_date");
+    const attendanceDateInput = document.getElementById("attendance_date");
+    const calendarPopup = document.getElementById("calendarPopup");
+    const calendarTitle = document.getElementById("calendarTitle");
+    const calendarDays = document.getElementById("calendarDays");
+    const prevMonthBtn = document.getElementById("prevMonth");
+    const nextMonthBtn = document.getElementById("nextMonth");
     const fetchButton = document.getElementById("fetchAttendance");
     const attendanceSection = document.getElementById("attendanceSection");
     const attendanceData = document.getElementById("attendanceData");
     const selectAllButton = document.getElementById("selectAll");
     const saveButton = document.getElementById("saveChanges");
     const messageSection = document.getElementById("messageSection");
+
+    let currentDate = new Date();
+    let availableDates = [];
+    let selectedAttendanceId = null;
 
     // Load attendance dates when subject and session year are selected
     function loadAttendanceDates() {
