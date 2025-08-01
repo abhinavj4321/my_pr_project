@@ -281,22 +281,20 @@ def get_students(request):
 
         if students.count() == 0:
             # No students found for this course and session
-            return JsonResponse(json.dumps({"message": "No students found for this course and session"}),
-                               content_type="application/json", safe=False)
+            return JsonResponse({"message": "No students found for this course and session"}, safe=False)
 
     except Staffs.DoesNotExist:
         # Staff not found
-        return JsonResponse(json.dumps({"error": "Staff not found"}), content_type="application/json", safe=False)
+        return JsonResponse({"error": "Staff not found"}, safe=False)
     except Subjects.DoesNotExist:
         # If subject doesn't exist or doesn't belong to this staff
-        return JsonResponse(json.dumps({"error": "Subject not found or not assigned to you"}),
-                           content_type="application/json", safe=False)
+        return JsonResponse({"error": "Subject not found or not assigned to you"}, safe=False)
     except SessionYearModel.DoesNotExist:
         # Session year not found
-        return JsonResponse(json.dumps({"error": "Session year not found"}), content_type="application/json", safe=False)
+        return JsonResponse({"error": "Session year not found"}, safe=False)
     except Exception as e:
         # Other errors
-        return JsonResponse(json.dumps({"error": str(e)}), content_type="application/json", safe=False)
+        return JsonResponse({"error": str(e)}, safe=False)
 
     list_data = []
 
@@ -304,7 +302,7 @@ def get_students(request):
         data_small={"id":student.admin.id, "name":student.admin.first_name+" "+student.admin.last_name}
         list_data.append(data_small)
 
-    return JsonResponse(json.dumps(list_data), content_type="application/json", safe=False)
+    return JsonResponse(list_data, safe=False)
 
 
 

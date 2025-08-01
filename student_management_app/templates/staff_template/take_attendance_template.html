@@ -338,8 +338,17 @@ document.addEventListener("DOMContentLoaded", function(){
         })
         .then(response => response.json())
         .then(data => {
-            displayStudents(data);
-            studentsSection.style.display = 'block';
+            if (Array.isArray(data)) {
+                displayStudents(data);
+                studentsSection.style.display = 'block';
+                showMessage(`${data.length} students loaded successfully`, 'success');
+            } else if (data.error) {
+                showMessage(data.error, 'error');
+            } else if (data.message) {
+                showMessage(data.message, 'error');
+            } else {
+                showMessage('No students found', 'error');
+            }
             fetchStudentsBtn.disabled = false;
             fetchStudentsBtn.innerHTML = '<i class="fas fa-users mr-2"></i>Fetch Students';
         })
@@ -491,15 +500,25 @@ document.addEventListener("DOMContentLoaded", function(){
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                document.getElementById('qrCodeDisplay').innerHTML = data;
-                qrCodeSection.style.display = 'block';
+                if (data.status === 'success') {
+                    // Display QR code image
+                    document.getElementById('qrCodeDisplay').innerHTML = `
+                        <img src="${data.qr_code_url}" alt="QR Code" class="max-w-full h-auto" style="max-width: 300px;">
+                    `;
+                    qrCodeSection.style.display = 'block';
+
+                    // Start timer
+                    startQRTimer(parseInt(expiryTime) * 60);
+
+                    showMessage('QR Code generated successfully!', 'success');
+                } else {
+                    showMessage(data.message || 'Error generating QR code', 'error');
+                }
+
                 generateQRBtn.disabled = false;
                 generateQRBtn.innerHTML = '<i class="fas fa-qrcode mr-2"></i>Generate QR Code';
-
-                // Start timer
-                startQRTimer(parseInt(expiryTime) * 60);
             })
             .catch(error => {
                 console.error('Error:', error);
