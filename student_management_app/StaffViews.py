@@ -412,11 +412,11 @@ def get_attendance_dates(request):
 
     except (Subjects.DoesNotExist, SessionYearModel.DoesNotExist, Staffs.DoesNotExist, ValueError):
         # If any model doesn't exist or invalid data
-        return JsonResponse(json.dumps([]), content_type="application/json", safe=False)
+        return JsonResponse([], safe=False)
     except Exception as e:
         # Log the error for debugging
         print(f"Error in get_attendance_dates: {str(e)}")
-        return JsonResponse(json.dumps([]), content_type="application/json", safe=False)
+        return JsonResponse([], safe=False)
 
     list_data = []
 
@@ -431,7 +431,7 @@ def get_attendance_dates(request):
         }
         list_data.append(data_small)
 
-    return JsonResponse(json.dumps(list_data), content_type="application/json", safe=False)
+    return JsonResponse(list_data, safe=False)
 
 
 @csrf_exempt
@@ -452,7 +452,7 @@ def get_attendance_student(request):
         }
         list_data.append(data_small)
 
-    return JsonResponse(json.dumps(list_data), content_type="application/json", safe=False)
+    return JsonResponse(list_data, safe=False)
 
 
 @csrf_exempt

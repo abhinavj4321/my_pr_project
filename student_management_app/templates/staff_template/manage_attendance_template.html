@@ -129,13 +129,23 @@ document.addEventListener("DOMContentLoaded", function(){
             })
             .then(response => response.json())
             .then(data => {
+                console.log('Attendance dates response:', data);
                 attendanceDateSelect.innerHTML = '<option value="">Select Date</option>';
-                data.forEach(date => {
+
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(date => {
+                        const option = document.createElement('option');
+                        option.value = date.id;
+                        option.textContent = date.attendance_date;
+                        attendanceDateSelect.appendChild(option);
+                    });
+                } else {
+                    console.log('No attendance dates found or invalid data format');
                     const option = document.createElement('option');
-                    option.value = date.id;
-                    option.textContent = date.attendance_date;
+                    option.value = "";
+                    option.textContent = "No attendance records found";
                     attendanceDateSelect.appendChild(option);
-                });
+                }
             })
             .catch(error => {
                 console.error('Error loading dates:', error);
