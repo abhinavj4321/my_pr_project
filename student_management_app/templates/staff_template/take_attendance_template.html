@@ -1,637 +1,553 @@
-{% extends 'staff_template/base_template.html' %} {% block page_title %} Take
-Attendance {% endblock page_title %} {% block main_content %} {% load static %}
+{% extends 'staff_template/base_template.html' %}
 
-<section class="content">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card card-primary">
-          <div class="card-header">
-            <h3 class="card-title">Take Attendance</h3>
-          </div>
+{% block page_title %}
+Take Attendance
+{% endblock page_title %}
 
-          <!-- Display Messages -->
-          {% if messages %}
-          <div class="form-group">
-            <div class="col-12">
-              {% for message in messages %}
-              <div
-                class="alert alert-{{ message.tags }} alert-dismissible fade show"
-                role="alert"
-                style="margin-top: 10px"
-              >
-                {{ message }}
-                <button
-                  type="button"
-                  class="close"
-                  data-dismiss="alert"
-                  aria-label="Close"
-                >
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-          {% endif %}
+{% block breadcrumb %}
+Take Attendance
+{% endblock breadcrumb %}
 
-          <div class="card-body">
-            <form id="attendanceForm" method="POST">
-              {% csrf_token %}
+{% block main_content %}
+{% load static %}
 
-              <!-- Select Subject -->
-              <div class="form-group">
-                <label>Subject</label>
-                <select class="form-control" name="subject" id="subject">
-                  {% for subject in subjects %}<option value="{{ subject.id }}" {% if selected_subject and selected_subject.id == subject.id %}selected{% endif %}>
-                    {{ subject.subject_name }}
-                  </option>
-                  {% endfor %}
-                </select>
-              </div>
-
-              <!-- Select Session Year -->
-              <div class="form-group">
-                <label>Session Year</label>
-                <select
-                  class="form-control"
-                  name="session_year"
-                  id="session_year"
-                >
-                  {% for session_year in session_years %}<option value="{{ session_year.id }}">{{ session_year.session_start_year }} to {{ session_year.session_end_year }}</option>{% endfor %}
-                </select>
-              </div>
-
-              <!-- Expiry Time for QR Code -->
-              <div class="form-group">
-                <label>QR Code Expiry Time (minutes)</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="expiry_time"
-                  name="expiry_time"
-                  value="30"
-                  min="1"
-                  max="120"
-                />
-              </div>
-
-              <!-- Location Settings -->
-              <div class="form-group">
-                <label>Allowed Radius (meters)</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="radius"
-                  name="radius"
-                  value="100"
-                  min="10"
-                  max="50000"
-                />
-                <small class="form-text text-muted"
-                  >Students must be within this distance from your location to
-                  mark attendance. For testing: use 20000 (20km) to allow remote testing.</small
-                >
-              </div>
-
-              <!-- Hidden fields for location data -->
-              <input type="hidden" id="latitude" name="latitude" />
-              <input type="hidden" id="longitude" name="longitude" />
-
-              <div class="form-group">
-                <div class="custom-control custom-switch">
-                  <input
-                    type="checkbox"
-                    class="custom-control-input"
-                    id="enableLocation"
-                    checked
-                  />
-                  <label class="custom-control-label" for="enableLocation"
-                    >Enable Location Verification</label
-                  >
+<!-- Take Attendance Interface -->
+<div class="space-y-6">
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                <div class="flex">
+                    <i class="fas fa-exclamation-circle mt-0.5 mr-2"></i>
+                    <span>{{ message }}</span>
                 </div>
-                <button type="button" id="refreshTeacherLocation" class="btn btn-sm btn-info mt-2" style="display: none;">🔄 Refresh My Location</button>
-                <div id="locationStatus" class="mt-2"></div>
-              </div>
-
-              <!-- Network Verification Settings -->
-              <div class="form-group">
-                <div class="custom-control custom-switch">
-                  <input
-                    type="checkbox"
-                    class="custom-control-input"
-                    id="enableNetwork"
-                    checked
-                  />
-                  <label class="custom-control-label" for="enableNetwork"
-                    >Enable Network Verification (IP-based)</label
-                  >
+            </div>
+            {% elif message.tags == 'success' %}
+            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-4">
+                <div class="flex">
+                    <i class="fas fa-check-circle mt-0.5 mr-2"></i>
+                    <span>{{ message }}</span>
                 </div>
-                <small class="form-text text-muted">
-                  Requires students to be on the same network as you. Uses IP address verification.
-                </small>
-              </div>
-            </form>
-          </div>
-
-          <div class="card-footer">
-            <button type="button" class="btn btn-primary btn-lg" id="fetch_student">
-              <i class="fas fa-users"></i> Fetch Students
-            </button>
-            <button type="button" class="btn btn-success btn-lg" id="generate_qr">
-              <i class="fas fa-qrcode"></i> Generate QR Code
-            </button>
-          </div>
-
-          <!-- Student Data Section -->
-          <div class="card-footer" id="student_data"></div>
-          <div class="card-footer" id="generated_qr"></div>
-
-          <!-- Debug Info -->
-          <div class="card-footer">
-            <div class="debug-info">
-              <h5>Debug Information</h5>
-              <p>Number of subjects: {{ subjects|length }}</p>
-              <p>Number of session years: {{ session_years|length }}</p>
-              {% if subjects|length == 0 %}
-                <div class="alert alert-warning">No subjects assigned to you. Please contact the administrator.</div>
-              {% endif %}
-              {% if session_years|length == 0 %}
-                <div class="alert alert-warning">No session years available. Please contact the administrator.</div>
-              {% endif %}
             </div>
-          </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 
-          <!-- Map Display -->
-          <div class="card-footer" id="map_container" style="display: none">
-            <h4>Your Current Location</h4>
-            <div id="map" style="height: 300px; width: 100%"></div>
-            <div id="radius_circle" class="mt-2">
-              <p>The circle shows the allowed attendance area.</p>
-            </div>
-          </div>
+    <!-- Method Selection -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Choose Attendance Method</h3>
+            <p class="text-sm text-gray-600 mt-1">Select how you want to take attendance</p>
         </div>
-      </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Manual Attendance Option -->
+                <div class="border border-gray-200 rounded-lg p-6 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer" id="manualOption">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-clipboard-list text-blue-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Manual Marking</h4>
+                        <p class="text-sm text-gray-600 mb-4">Mark attendance manually for each student</p>
+                        <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200">
+                            Select Manual
+                        </button>
+                    </div>
+                </div>
+
+                <!-- QR Code Attendance Option -->
+                <div class="border border-gray-200 rounded-lg p-6 hover:border-green-300 hover:shadow-md transition-all cursor-pointer" id="qrOption">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-qrcode text-green-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">QR Code Scanning</h4>
+                        <p class="text-sm text-gray-600 mb-4">Students scan QR code to mark attendance</p>
+                        <button type="button" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200">
+                            Select QR Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</section>
 
-{% endblock main_content %} {% block custom_js %}
-<!-- Leaflet CSS -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-  crossorigin=""
-/>
+    <!-- Manual Attendance Section -->
+    <div id="manualSection" class="bg-white rounded-lg shadow-sm border border-gray-200" style="display: none;">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Manual Attendance</h3>
+            <p class="text-sm text-gray-600 mt-1">Select criteria and mark attendance manually</p>
+        </div>
 
-<!-- Leaflet JS -->
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-  crossorigin=""
-></script>
+        <div class="p-6">
+            <form id="manualAttendanceForm" method="POST">
+                {% csrf_token %}
 
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label for="manual_subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                        <select name="subject" id="manual_subject" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            <option value="">Select Subject</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="manual_session_year" class="block text-sm font-medium text-gray-700 mb-2">Session Year</label>
+                        <select name="session_year" id="manual_session_year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            <option value="">Select Session Year</option>
+                            {% for session_year in session_years %}
+                            <option value="{{ session_year.id }}">{{ session_year.session_start_year }} - {{ session_year.session_end_year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="manual_attendance_date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                        <input type="date" name="attendance_date" id="manual_attendance_date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mb-6">
+                    <button type="button" id="fetchStudentsBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                        <i class="fas fa-users mr-2"></i>
+                        Fetch Students
+                    </button>
+                </div>
+
+                <!-- Students List -->
+                <div id="studentsSection" style="display: none;">
+                    <div class="border-t border-gray-200 pt-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-semibold text-gray-900">Mark Attendance</h4>
+                            <div class="flex space-x-2">
+                                <button type="button" id="markAllPresent" class="bg-green-100 hover:bg-green-200 text-green-700 font-medium py-2 px-4 rounded-md transition-colors duration-200 text-sm">
+                                    <i class="fas fa-check-square mr-1"></i>
+                                    Mark All Present
+                                </button>
+                                <button type="button" id="markAllAbsent" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-2 px-4 rounded-md transition-colors duration-200 text-sm">
+                                    <i class="fas fa-times-square mr-1"></i>
+                                    Mark All Absent
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="studentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                            <!-- Students will be populated here -->
+                        </div>
+
+                        <div class="flex justify-end pt-4 border-t border-gray-200">
+                            <button type="button" id="saveAttendanceBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                                <i class="fas fa-save mr-2"></i>
+                                Save Attendance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- QR Code Section -->
+    <div id="qrSection" class="bg-white rounded-lg shadow-sm border border-gray-200" style="display: none;">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">QR Code Attendance</h3>
+            <p class="text-sm text-gray-600 mt-1">Generate QR code for students to scan</p>
+        </div>
+
+        <div class="p-6">
+            <form id="qrAttendanceForm" method="POST">
+                {% csrf_token %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="qr_subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                        <select name="subject" id="qr_subject" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                            <option value="">Select Subject</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="qr_session_year" class="block text-sm font-medium text-gray-700 mb-2">Session Year</label>
+                        <select name="session_year" id="qr_session_year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                            <option value="">Select Session Year</option>
+                            {% for session_year in session_years %}
+                            <option value="{{ session_year.id }}">{{ session_year.session_start_year }} - {{ session_year.session_end_year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="expiry_time" class="block text-sm font-medium text-gray-700 mb-2">QR Code Expiry (minutes)</label>
+                        <input type="number" name="expiry_time" id="expiry_time" value="30" min="1" max="120" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                        <p class="text-xs text-gray-500 mt-1">How long the QR code will be valid</p>
+                    </div>
+
+                    <div>
+                        <label for="radius" class="block text-sm font-medium text-gray-700 mb-2">Allowed Radius (meters)</label>
+                        <input type="number" name="radius" id="radius" value="100" min="10" max="50000" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                        <p class="text-xs text-gray-500 mt-1">Students must be within this distance</p>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="enableLocation" name="enableLocation" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                        <label for="enableLocation" class="ml-2 block text-sm text-gray-700">Enable Location Verification</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Students must be within the specified radius to mark attendance</p>
+                </div>
+
+                <!-- Hidden fields for location data -->
+                <input type="hidden" id="latitude" name="latitude" />
+                <input type="hidden" id="longitude" name="longitude" />
+
+                <div class="mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="enableNetwork" name="enableNetwork" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                        <label for="enableNetwork" class="ml-2 block text-sm text-gray-700">Enable Network Verification</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Requires students to be on the same network (IP-based verification)</p>
+                </div>
+
+                <div class="flex justify-end mb-6">
+                    <button type="button" id="generateQRBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                        <i class="fas fa-qrcode mr-2"></i>
+                        Generate QR Code
+                    </button>
+                </div>
+
+                <!-- QR Code Display -->
+                <div id="qrCodeSection" style="display: none;">
+                    <div class="border-t border-gray-200 pt-6">
+                        <div class="text-center">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4">QR Code for Attendance</h4>
+                            <div id="qrCodeDisplay" class="inline-block p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
+                                <!-- QR Code will be displayed here -->
+                            </div>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-600">Students can scan this QR code to mark their attendance</p>
+                                <div id="qrTimer" class="text-lg font-semibold text-red-600 mt-2">
+                                    <!-- Timer will be displayed here -->
+                                </div>
+                            </div>
+
+                            <!-- Manual Attendance Option -->
+                            <div class="mt-6 pt-4 border-t border-gray-200">
+                                <button type="button" id="switchToManualBtn" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-2 px-4 rounded-md transition-colors duration-200">
+                                    <i class="fas fa-clipboard-list mr-2"></i>
+                                    Switch to Manual Attendance
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock main_content %}
+
+{% block custom_js %}
 <script>
-  // Get CSRF token
-  var csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+document.addEventListener("DOMContentLoaded", function(){
+    // Get elements
+    const manualOption = document.getElementById("manualOption");
+    const qrOption = document.getElementById("qrOption");
+    const manualSection = document.getElementById("manualSection");
+    const qrSection = document.getElementById("qrSection");
 
-  // Global variables for map functionality
-  var map;
-  var teacherMarker;
-  var radiusCircle;
-  var currentPosition = null;
+    // Manual attendance elements
+    const fetchStudentsBtn = document.getElementById("fetchStudentsBtn");
+    const studentsSection = document.getElementById("studentsSection");
+    const studentsList = document.getElementById("studentsList");
+    const markAllPresent = document.getElementById("markAllPresent");
+    const markAllAbsent = document.getElementById("markAllAbsent");
+    const saveAttendanceBtn = document.getElementById("saveAttendanceBtn");
 
-  $(document).ready(function () {
-    // Initialize map
-    map = L.map("map");
+    // QR code elements
+    const generateQRBtn = document.getElementById("generateQRBtn");
+    const qrCodeSection = document.getElementById("qrCodeSection");
+    const switchToManualBtn = document.getElementById("switchToManualBtn");
 
-    // Add OpenStreetMap tiles
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
+    // Method selection
+    manualOption.addEventListener('click', function() {
+        manualSection.style.display = 'block';
+        qrSection.style.display = 'none';
+        manualOption.classList.add('border-blue-500', 'bg-blue-50');
+        qrOption.classList.remove('border-green-500', 'bg-green-50');
+    });
 
-    // Try to get current position
-    getLocation();
-  });
+    qrOption.addEventListener('click', function() {
+        qrSection.style.display = 'block';
+        manualSection.style.display = 'none';
+        qrOption.classList.add('border-green-500', 'bg-green-50');
+        manualOption.classList.remove('border-blue-500', 'bg-blue-50');
+    });
 
-  // Get user's current location
-  function getLocation() {
-    if (navigator.geolocation) {
-      $("#locationStatus").html(
-        '<div class="alert alert-warning">Requesting location access...</div>'
-      );
+    // Switch from QR to Manual
+    switchToManualBtn.addEventListener('click', function() {
+        // Copy values from QR form to manual form
+        document.getElementById('manual_subject').value = document.getElementById('qr_subject').value;
+        document.getElementById('manual_session_year').value = document.getElementById('qr_session_year').value;
+        document.getElementById('manual_attendance_date').value = new Date().toISOString().split('T')[0];
 
-      navigator.geolocation.getCurrentPosition(
-        function (position) {
-          currentPosition = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: position.timestamp
-          };
+        // Switch to manual section
+        manualSection.style.display = 'block';
+        qrSection.style.display = 'none';
+        manualOption.classList.add('border-blue-500', 'bg-blue-50');
+        qrOption.classList.remove('border-green-500', 'bg-green-50');
 
-          // Set map view to current position
-          map.setView([currentPosition.lat, currentPosition.lng], 15);
+        // Fetch students automatically
+        fetchStudents();
+    });
 
-          // Add or update marker for teacher's position
-          if (teacherMarker) {
-            teacherMarker.setLatLng([currentPosition.lat, currentPosition.lng]);
-          } else {
-            teacherMarker = L.marker([
-              currentPosition.lat,
-              currentPosition.lng,
-            ]).addTo(map);
-          }
+    // Fetch students for manual attendance
+    fetchStudentsBtn.addEventListener('click', fetchStudents);
 
-          // Update radius circle
-          updateRadiusCircle();
+    function fetchStudents() {
+        const subjectId = document.getElementById('manual_subject').value;
+        const sessionYearId = document.getElementById('manual_session_year').value;
+        const attendanceDate = document.getElementById('manual_attendance_date').value;
 
-          // Update hidden form fields
-          $("#latitude").val(currentPosition.lat);
-          $("#longitude").val(currentPosition.lng);
-
-          // Update status with detailed location info
-          $("#locationStatus").html(
-            '<div class="alert alert-success">' +
-            '<strong>Location detected successfully!</strong><br>' +
-            '<small>Coordinates: ' + currentPosition.lat.toFixed(6) + ', ' + currentPosition.lng.toFixed(6) + '<br>' +
-            'Accuracy: ±' + Math.round(currentPosition.accuracy) + 'm<br>' +
-            'Timestamp: ' + new Date(currentPosition.timestamp).toLocaleTimeString() + '</small>' +
-            '</div>'
-          );
-          $("#map_container").show();
-
-          // Force map to recalculate its size after showing
-          setTimeout(function () {
-            map.invalidateSize();
-          }, 100);
-        },
-        function (error) {
-          // Handle geolocation error
-          var errorMessage;
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = "User denied the request for geolocation.";
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = "Location information is unavailable.";
-              break;
-            case error.TIMEOUT:
-              errorMessage = "The request to get user location timed out.";
-              break;
-            case error.UNKNOWN_ERROR:
-              errorMessage = "An unknown error occurred.";
-              break;
-          }
-          $("#locationStatus").html(
-            '<div class="alert alert-danger">' + errorMessage + "</div>"
-          );
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0  // Force fresh location, no cache
+        if (!subjectId || !sessionYearId || !attendanceDate) {
+            showMessage('Please fill all fields', 'error');
+            return;
         }
-      );
-    } else {
-      $("#locationStatus").html(
-        '<div class="alert alert-danger">Geolocation is not supported by this browser.</div>'
-      );
+
+        fetchStudentsBtn.disabled = true;
+        fetchStudentsBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+
+        fetch('{% url "get_students" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `subject_id=${subjectId}&session_year_id=${sessionYearId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayStudents(data);
+            studentsSection.style.display = 'block';
+            fetchStudentsBtn.disabled = false;
+            fetchStudentsBtn.innerHTML = '<i class="fas fa-users mr-2"></i>Fetch Students';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('Error fetching students', 'error');
+            fetchStudentsBtn.disabled = false;
+            fetchStudentsBtn.innerHTML = '<i class="fas fa-users mr-2"></i>Fetch Students';
+        });
     }
-  }
 
-  // Network verification removed
+    function displayStudents(students) {
+        studentsList.innerHTML = '';
 
-  // Update radius circle based on input value
-  function updateRadiusCircle() {
-    if (currentPosition && map) {
-      var radius = parseInt($("#radius").val());
-
-      // Remove existing circle if any
-      if (radiusCircle) {
-        radiusCircle.remove();
-      }
-
-      // Create new circle
-      radiusCircle = L.circle([currentPosition.lat, currentPosition.lng], {
-        color: "red",
-        fillColor: "#f03",
-        fillOpacity: 0.2,
-        radius: radius,
-      }).addTo(map);
+        students.forEach(student => {
+            const studentCard = document.createElement('div');
+            studentCard.className = 'bg-gray-50 border border-gray-200 rounded-lg p-4';
+            studentCard.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="font-medium text-gray-900">${student.name}</h5>
+                        <p class="text-sm text-gray-600">ID: ${student.id}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="status_${student.id}" value="1" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300">
+                            <span class="ml-2 text-sm text-green-700">Present</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="status_${student.id}" value="0" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300" checked>
+                            <span class="ml-2 text-sm text-red-700">Absent</span>
+                        </label>
+                    </div>
+                </div>
+                <input type="hidden" name="student_id" value="${student.id}">
+            `;
+            studentsList.appendChild(studentCard);
+        });
     }
-  }
 
-  $(document).ready(function () {
-    var csrf_token = $("input[name=csrfmiddlewaretoken]").val();
-
-    // Update circle when radius changes
-    $("#radius").on("change", function () {
-      updateRadiusCircle();
+    // Mark all present/absent
+    markAllPresent.addEventListener('click', function() {
+        document.querySelectorAll('input[type="radio"][value="1"]').forEach(radio => {
+            radio.checked = true;
+        });
     });
 
-    // Toggle location functionality
-    $("#enableLocation").on("change", function () {
-      if ($(this).is(":checked")) {
-        $("#radius").prop("disabled", false);
-        $("#refreshTeacherLocation").show();
-        getLocation(); // Get fresh location when enabled
-        if (currentPosition) {
-          $("#map_container").show();
-          setTimeout(function () {
-            map.invalidateSize();
-          }, 100);
+    markAllAbsent.addEventListener('click', function() {
+        document.querySelectorAll('input[type="radio"][value="0"]').forEach(radio => {
+            radio.checked = true;
+        });
+    });
+
+    // Save attendance
+    saveAttendanceBtn.addEventListener('click', function() {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('subject_id', document.getElementById('manual_subject').value);
+        formData.append('session_year_id', document.getElementById('manual_session_year').value);
+        formData.append('attendance_date', document.getElementById('manual_attendance_date').value);
+
+        const studentInputs = document.querySelectorAll('input[name="student_id"]');
+        const studentData = [];
+
+        studentInputs.forEach(input => {
+            const studentId = input.value;
+            const statusRadio = document.querySelector(`input[name="status_${studentId}"]:checked`);
+            if (statusRadio) {
+                studentData.push({
+                    student_id: studentId,
+                    status: statusRadio.value
+                });
+            }
+        });
+
+        formData.append('student_ids', JSON.stringify(studentData));
+
+        saveAttendanceBtn.disabled = true;
+        saveAttendanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+
+        fetch('{% url "save_attendance_data" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            if (data === "OK") {
+                showMessage('Attendance saved successfully!', 'success');
+                // Reset form
+                studentsSection.style.display = 'none';
+                studentsList.innerHTML = '';
+            } else {
+                showMessage('Error saving attendance', 'error');
+            }
+            saveAttendanceBtn.disabled = false;
+            saveAttendanceBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Attendance';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('Error saving attendance', 'error');
+            saveAttendanceBtn.disabled = false;
+            saveAttendanceBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Attendance';
+        });
+    });
+
+    // QR Code generation
+    generateQRBtn.addEventListener('click', function() {
+        const subjectId = document.getElementById('qr_subject').value;
+        const sessionYearId = document.getElementById('qr_session_year').value;
+        const expiryTime = document.getElementById('expiry_time').value;
+        const radius = document.getElementById('radius').value;
+        const enableLocation = document.getElementById('enableLocation').checked;
+        const enableNetwork = document.getElementById('enableNetwork').checked;
+
+        if (!subjectId || !sessionYearId) {
+            showMessage('Please select subject and session year', 'error');
+            return;
         }
-      } else {
-        $("#radius").prop("disabled", true);
-        $("#refreshTeacherLocation").hide();
-        $("#map_container").hide();
-      }
-    });
 
-    // Refresh teacher location button
-    $("#refreshTeacherLocation").click(function() {
-      $(this).html('🔄 Getting Location...');
-      getLocation();
-      setTimeout(() => {
-        $(this).html('🔄 Refresh My Location');
-      }, 2000);
-    });
-
-    // Network verification removed
-
-    // Fetch students when subject and session are selected
-    $("#fetch_student").click(function () {
-      var subject = $("#subject").val();
-      var session_year = $("#session_year").val();
-
-      if (!subject || !session_year) {
-        alert("Please select subject and session year.");
-        return;
-      }
-
-      $.ajax({
-        url: '{% url "get_students" %}',
-        type: "POST",
-        data: {
-          subject: subject,
-          session_year: session_year,
-          csrfmiddlewaretoken: csrf_token,
-        },
-        success: function (response) {
-          var json_data = JSON.parse(response);
-          var div_data =
-            "<div class='form-group'><label>Attendance Date:</label><input type='date' name='attendance_date' id='attendance_date' class='form-control' required/></div>";
-          div_data += "<div class='form-group'><div class='row'>";
-
-          for (var key in json_data) {
-            div_data +=
-              "<div class='col-lg-2'><div class='form-check'><input type='checkbox' checked='checked' name='student_data[]' value='" +
-              json_data[key]["id"] +
-              "' /> <label class='form-check-label'>" +
-              json_data[key]["name"] +
-              " </label></div></div>";
-          }
-
-          div_data += "</div></div>";
-          div_data +=
-            "<div class='form-group'><button id='save_attendance' class='btn btn-success' type='button'>Save Attendance</button></div>";
-
-          $("#student_data").html(div_data);
-        },
-        error: function () {
-          alert("Error in fetching students.");
-        },
-      });
-    });
-
-    // Generate QR Code only when staff is ready
-    $("#generate_qr").click(function () {
-      var subject = $("#subject").val();
-      var session_year = $("#session_year").val();
-      var expiry_time = $("#expiry_time").val();
-      var radius = $("#radius").val();
-      var enableLocation = $("#enableLocation").is(":checked");
-      var enableNetwork = $("#enableNetwork").is(":checked");
-
-      if (!subject || !session_year || !expiry_time) {
-        alert("Please select a subject, session year, and enter expiry time.");
-        return;
-      }
-
-      // Validate radius value
-      if (enableLocation) {
-        var radiusNum = parseInt(radius);
-        if (isNaN(radiusNum) || radiusNum < 10 || radiusNum > 50000) {
-          alert("Please enter a valid radius between 10 and 50000 meters (50km for testing).");
-          return;
-        }
-      }
-
-      // Check if location is enabled but not available
-      if (enableLocation && !currentPosition) {
-        alert(
-          "Location is required but not available. Please allow location access and try again."
-        );
-        return;
-      }
-
-      // Check if location is too old (more than 5 minutes)
-      if (enableLocation && currentPosition && currentPosition.timestamp) {
-        var locationAge = Date.now() - currentPosition.timestamp;
-        var fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
-        if (locationAge > fiveMinutes) {
-          alert("Your location data is more than 5 minutes old. Please refresh your location and try again.");
-          return;
-        }
-      }
-
-      // Network verification will be IP-based only
-
-      // Network verification removed
-
-      var requestData = {
-        subject: subject,
-        session_year: session_year,
-        expiry_time: expiry_time,
-        csrfmiddlewaretoken: csrf_token,
-      };
-
-      // Add location data if enabled
-      if (enableLocation && currentPosition) {
-        requestData.latitude = currentPosition.lat;
-        requestData.longitude = currentPosition.lng;
-        requestData.radius = radius;
-
-        // Debug: Log the values being sent
-        console.log("Sending QR generation data:");
-        console.log("- Radius:", radius, "Type:", typeof radius);
-        console.log("- Teacher coordinates:", currentPosition.lat, currentPosition.lng);
-        console.log("- Teacher accuracy:", currentPosition.accuracy);
-        console.log("- Timestamp:", new Date(currentPosition.timestamp).toLocaleString());
-      }
-
-      // Add network verification flag
-      if (enableNetwork) {
-        requestData.enable_network_verification = true;
-      }
-
-      // Network verification removed
-
-      $.ajax({
-        url: '{% url "staff_generate_qr" %}',
-        type: "POST",
-        data: requestData,
-        success: function (data) {
-          if (data.status === "success") {
-            var locationInfo = enableLocation
-              ? "<p><i class='fas fa-map-marker-alt'></i> Location verification is enabled. Students must be within " +
-                radius +
-                " meters of your location.</p>"
-              : "<p><i class='fas fa-map-marker-alt text-muted'></i> Location verification is disabled.</p>";
-
-            var networkInfo = enableNetwork
-              ? "<p><i class='fas fa-wifi'></i> Network verification is enabled (IP-based). Students must be on the same network.</p>"
-              : "<p><i class='fas fa-wifi text-muted'></i> Network verification is disabled.</p>";
-
-            var code_html =
-              "<div class='alert alert-info'>Generated QR Code:<br>" +
-              "<img src='" +
-              data.qr_code_url +
-              "' alt='QR Code' width='200' id='qr_code_image'><br>" +
-              "Expiry Time: " +
-              data.expiry_time +
-              "<br>" +
-              locationInfo +
-              networkInfo +
-              "<div class='mt-3'>" +
-              "<a href='" +
-              data.qr_code_url +
-              "' class='btn btn-primary btn-sm mr-2' download='attendance_qr.png'>" +
-              "<i class='fas fa-download'></i> Download QR</a>" +
-              "<button id='share_whatsapp' class='btn btn-success btn-sm' data-qr-url='" + data.qr_code_url + "' data-qr-data-url='" + data.qr_data_url + "'><i class='fab fa-whatsapp'></i> Share on WhatsApp</button>" +
-              "</div></div>";
-
-            $("#generated_qr").html(code_html);
-          } else {
-            alert(data.message);
-          }
-        },
-        error: function () {
-          alert("Error generating QR code.");
-        },
-      });
-    });
-
-    // Handle WhatsApp sharing with image
-    $(document).on("click", "#share_whatsapp", function() {
-      var qrUrl = $(this).data("qr-url");
-      var qrDataUrl = $(this).data("qr-data-url");  // Get the base64 data URL
-      var subjectName = $("#subject option:selected").text();
-      var sessionYear = $("#session_year option:selected").text();
-      var message = "Attendance QR Code for " + subjectName + " (" + sessionYear + "). Scan this QR code to mark your attendance.";
-
-      // Method 1: Direct WhatsApp sharing with the full URL and image
-      // This works on most mobile devices
-      var whatsappUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent(message);
-
-      // Method 2: Try to use the Web Share API if available (modern browsers)
-      if (navigator.share && navigator.canShare) {
-        // Convert base64 to blob
-        var byteString = atob(qrDataUrl.split(',')[1]);
-        var mimeString = qrDataUrl.split(',')[0].split(':')[1].split(';')[0];
-        var ab = new ArrayBuffer(byteString.length);
-        var ia = new Uint8Array(ab);
-        for (var i = 0; i < byteString.length; i++) {
-          ia[i] = byteString.charCodeAt(i);
-        }
-        var blob = new Blob([ab], {type: mimeString});
-        var file = new File([blob], "attendance_qr.png", {type: "image/png"});
-
-        // Check if we can share files
-        var shareData = {
-          title: "Attendance QR Code",
-          text: message,
-          files: [file]
-        };
-
-        if (navigator.canShare(shareData)) {
-          navigator.share(shareData)
-            .then(() => console.log("Shared successfully"))
-            .catch(error => {
-              console.error("Error sharing:", error);
-              // Fallback to Method 1 if sharing fails
-              window.open(whatsappUrl, "_blank");
+        // Get location if enabled
+        if (enableLocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                document.getElementById('latitude').value = position.coords.latitude;
+                document.getElementById('longitude').value = position.coords.longitude;
+                generateQR();
+            }, function(error) {
+                showMessage('Location access required for QR generation', 'error');
             });
         } else {
-          // If we can't share files, share just the text with the URL
-          navigator.share({
-            title: "Attendance QR Code",
-            text: message + "\n" + window.location.origin + qrUrl
-          })
-          .then(() => console.log("Shared text successfully"))
-          .catch(error => {
-            console.error("Error sharing text:", error);
-            window.open(whatsappUrl, "_blank");
-          });
+            generateQR();
         }
-      } else {
-        // Fallback to Method 1 if Web Share API is not available
-        window.open(whatsappUrl, "_blank");
-      }
+
+        function generateQR() {
+            generateQRBtn.disabled = true;
+            generateQRBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            formData.append('subject', subjectId);
+            formData.append('session_year', sessionYearId);
+            formData.append('expiry_time', expiryTime);
+            formData.append('radius', radius);
+            formData.append('latitude', document.getElementById('latitude').value);
+            formData.append('longitude', document.getElementById('longitude').value);
+            if (enableLocation) formData.append('enableLocation', 'on');
+            if (enableNetwork) formData.append('enableNetwork', 'on');
+
+            fetch('{% url "staff_generate_qr" %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('qrCodeDisplay').innerHTML = data;
+                qrCodeSection.style.display = 'block';
+                generateQRBtn.disabled = false;
+                generateQRBtn.innerHTML = '<i class="fas fa-qrcode mr-2"></i>Generate QR Code';
+
+                // Start timer
+                startQRTimer(parseInt(expiryTime) * 60);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Error generating QR code', 'error');
+                generateQRBtn.disabled = false;
+                generateQRBtn.innerHTML = '<i class="fas fa-qrcode mr-2"></i>Generate QR Code';
+            });
+        }
     });
 
-    // Save attendance data
-    $(document).on("click", "#save_attendance", function () {
-      $(this).attr("disabled", "disabled").text("Saving...");
+    function startQRTimer(seconds) {
+        const timer = document.getElementById('qrTimer');
+        const interval = setInterval(function() {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timer.textContent = `Expires in: ${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 
-      var student_data = $("input[name='student_data[]']")
-        .map(function () {
-          return {
-            id: $(this).val(),
-            status: $(this).is(":checked") ? 1 : 0,
-          };
-        })
-        .get();
+            if (seconds <= 0) {
+                clearInterval(interval);
+                timer.textContent = 'QR Code Expired';
+                timer.className = 'text-lg font-semibold text-red-600 mt-2';
+            }
+            seconds--;
+        }, 1000);
+    }
 
-      var attendance_date = $("#attendance_date").val();
-      var subject_id = $("#subject").val();
-      var session_year_id = $("#session_year").val();
+    function showMessage(message, type) {
+        // Create message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg ${
+            type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'
+        }`;
+        messageDiv.innerHTML = `
+            <div class="flex">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mt-0.5 mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
 
-      if (!attendance_date) {
-        alert("Please select an attendance date.");
-        $(this).removeAttr("disabled").text("Save Attendance");
-        return;
-      }
+        document.body.appendChild(messageDiv);
 
-      student_data = JSON.stringify(student_data);
-
-      $.ajax({
-        url: '{% url "save_attendance_data" %}',
-        type: "POST",
-        data: {
-          student_ids: student_data,
-          attendance_date: attendance_date,
-          subject_id: subject_id,
-          session_year_id: session_year_id,
-          csrfmiddlewaretoken: csrf_token,
-        },
-        success: function (response) {
-          if (response == "OK") {
-            alert("Attendance Saved!");
-            location.reload();
-          } else {
-            alert(response);
-          }
-        },
-        error: function () {
-          alert("Error in saving attendance data!");
-        },
-      });
-    });
-  });
+        // Remove after 5 seconds
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
+    }
+});
 </script>
 {% endblock custom_js %}
+
+
