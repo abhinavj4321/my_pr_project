@@ -195,10 +195,27 @@ def verify_network_connectivity(student_ip, teacher_ip, student_ssid=None, teach
             verification_result['is_same_network'] = True
             verification_result['verification_method'] = 'wifi_ssid'
 
-    # If both methods are available, require both to pass for higher security
+    # If both methods are available, use OR logic (either one can pass) for better usability
     if student_ssid and teacher_ssid and student_ip and teacher_ip:
-        verification_result['is_same_network'] = verification_result['ip_match'] and verification_result['ssid_match']
-        verification_result['verification_method'] = 'ip_and_ssid'
+        # Use OR logic - if either IP or SSID matches, consider it same network
+        verification_result['is_same_network'] = verification_result['ip_match'] or verification_result['ssid_match']
+        if verification_result['ip_match'] and verification_result['ssid_match']:
+            verification_result['verification_method'] = 'both_ip_and_ssid'
+        elif verification_result['ip_match']:
+            verification_result['verification_method'] = 'ip_network'
+        elif verification_result['ssid_match']:
+            verification_result['verification_method'] = 'wifi_ssid'
+
+    # Add debugging information
+    print(f"Network verification debug:")
+    print(f"- Student IP: {student_ip}")
+    print(f"- Teacher IP: {teacher_ip}")
+    print(f"- Student SSID: {student_ssid}")
+    print(f"- Teacher SSID: {teacher_ssid}")
+    print(f"- IP Match: {verification_result['ip_match']}")
+    print(f"- SSID Match: {verification_result['ssid_match']}")
+    print(f"- Final Result: {verification_result['is_same_network']}")
+    print(f"- Method: {verification_result['verification_method']}")
 
     return verification_result
 
