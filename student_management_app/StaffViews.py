@@ -368,20 +368,12 @@ def save_attendance_data(request):
 
 
 def staff_update_attendance(request):
-    # Get the Staff instance linked to the logged-in user
-    staff_instance = Staffs.objects.get(admin=request.user)
-
-    # Fetch only subjects assigned to this staff
-    subjects = Subjects.objects.filter(staff_id=staff_instance)
-    session_years = SessionYearModel.objects.all()
-    context = {
-        "subjects": subjects,
-        "session_years": session_years
-    }
-    return render(request, "staff_template/update_attendance_template.html", context)
+    """Redirect to the combined manage attendance view"""
+    from django.shortcuts import redirect
+    return redirect('staff_view_attendance')
 
 def staff_view_attendance(request):
-    """View for staff to view attendance records"""
+    """Combined view for staff to view and update attendance records"""
     # Get the Staff instance linked to the logged-in user
     staff_instance = Staffs.objects.get(admin=request.user)
 
@@ -395,7 +387,7 @@ def staff_view_attendance(request):
         "subjects": subjects,
         "session_years": session_years
     }
-    return render(request, "staff_template/view_attendance_template.html", context)
+    return render(request, "staff_template/manage_attendance_template.html", context)
 
 @csrf_exempt
 def get_attendance_dates(request):

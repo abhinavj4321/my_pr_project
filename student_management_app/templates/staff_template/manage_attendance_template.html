@@ -1,0 +1,311 @@
+{% extends 'staff_template/base_template.html' %}
+
+{% block page_title %}
+Manage Attendance
+{% endblock page_title %}
+
+{% block breadcrumb %}
+Manage Attendance
+{% endblock breadcrumb %}
+
+{% block main_content %}
+
+<!-- Manage Attendance Interface -->
+<div class="space-y-6">
+    <!-- Filter Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Filter Attendance Records</h3>
+            <p class="text-sm text-gray-600 mt-1">Select criteria to view and manage attendance</p>
+        </div>
+        
+        <div class="p-6">
+            <form id="filterForm" class="space-y-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                        <select name="subject" id="subject" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            <option value="">Select Subject</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="session_year" class="block text-sm font-medium text-gray-700 mb-2">Session Year</label>
+                        <select name="session_year" id="session_year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            <option value="">Select Session Year</option>
+                            {% for session_year in session_years %}
+                            <option value="{{ session_year.id }}">{{ session_year.session_start_year }} - {{ session_year.session_end_year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="attendance_date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                        <select name="attendance_date" id="attendance_date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            <option value="">Select Date</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="button" id="fetchAttendance" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                        <i class="fas fa-search mr-2"></i>
+                        Load Attendance
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Attendance Records Section -->
+    <div id="attendanceSection" class="bg-white rounded-lg shadow-sm border border-gray-200" style="display: none;">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Attendance Records</h3>
+                    <p class="text-sm text-gray-600 mt-1">View and update student attendance</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="button" id="selectAll" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200 text-sm">
+                        <i class="fas fa-check-square mr-1"></i>
+                        Select All
+                    </button>
+                    <button type="button" id="saveChanges" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 text-sm">
+                        <i class="fas fa-save mr-1"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <form id="attendanceForm">
+                {% csrf_token %}
+                <div id="attendanceData" class="space-y-4">
+                    <!-- Attendance records will be loaded here -->
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Messages Section -->
+    <div id="messageSection" style="display: none;">
+        <!-- Success/Error messages will appear here -->
+    </div>
+</div>
+
+{% endblock main_content %}
+
+{% block custom_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    const subjectSelect = document.getElementById("subject");
+    const sessionYearSelect = document.getElementById("session_year");
+    const attendanceDateSelect = document.getElementById("attendance_date");
+    const fetchButton = document.getElementById("fetchAttendance");
+    const attendanceSection = document.getElementById("attendanceSection");
+    const attendanceData = document.getElementById("attendanceData");
+    const selectAllButton = document.getElementById("selectAll");
+    const saveButton = document.getElementById("saveChanges");
+    const messageSection = document.getElementById("messageSection");
+
+    // Load attendance dates when subject and session year are selected
+    function loadAttendanceDates() {
+        const subjectId = subjectSelect.value;
+        const sessionYearId = sessionYearSelect.value;
+        
+        if (subjectId && sessionYearId) {
+            fetch('{% url "get_attendance_dates" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `subject_id=${subjectId}&session_year_id=${sessionYearId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                attendanceDateSelect.innerHTML = '<option value="">Select Date</option>';
+                data.forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date.id;
+                    option.textContent = date.attendance_date;
+                    attendanceDateSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading dates:', error);
+                showMessage('Error loading attendance dates', 'error');
+            });
+        } else {
+            attendanceDateSelect.innerHTML = '<option value="">Select Date</option>';
+        }
+    }
+
+    subjectSelect.addEventListener('change', loadAttendanceDates);
+    sessionYearSelect.addEventListener('change', loadAttendanceDates);
+
+    // Fetch attendance records
+    fetchButton.addEventListener('click', function() {
+        const subjectId = subjectSelect.value;
+        const sessionYearId = sessionYearSelect.value;
+        const attendanceId = attendanceDateSelect.value;
+        
+        if (!subjectId || !sessionYearId || !attendanceId) {
+            showMessage('Please select all filter criteria', 'error');
+            return;
+        }
+
+        fetchButton.disabled = true;
+        fetchButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+
+        fetch('{% url "get_attendance_student" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `subject_id=${subjectId}&session_year_id=${sessionYearId}&attendance_id=${attendanceId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayAttendanceRecords(data);
+            attendanceSection.style.display = 'block';
+            fetchButton.disabled = false;
+            fetchButton.innerHTML = '<i class="fas fa-search mr-2"></i>Load Attendance';
+        })
+        .catch(error => {
+            console.error('Error loading attendance:', error);
+            showMessage('Error loading attendance records', 'error');
+            fetchButton.disabled = false;
+            fetchButton.innerHTML = '<i class="fas fa-search mr-2"></i>Load Attendance';
+        });
+    });
+
+    // Display attendance records
+    function displayAttendanceRecords(data) {
+        if (!data || data.length === 0) {
+            attendanceData.innerHTML = '<div class="text-center py-8 text-gray-500">No attendance records found</div>';
+            return;
+        }
+
+        let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">';
+        
+        data.forEach(student => {
+            const isPresent = student.status === true || student.status === 'true' || student.status === 1;
+            html += `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-gray-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900">${student.name}</h4>
+                                <p class="text-sm text-gray-500">ID: ${student.id}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="status_${student.id}" value="1" ${isPresent ? 'checked' : ''} 
+                                   class="text-green-600 focus:ring-green-500">
+                            <span class="text-sm font-medium text-green-700">Present</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="status_${student.id}" value="0" ${!isPresent ? 'checked' : ''} 
+                                   class="text-red-600 focus:ring-red-500">
+                            <span class="text-sm font-medium text-red-700">Absent</span>
+                        </label>
+                    </div>
+                    
+                    <input type="hidden" name="student_id" value="${student.id}">
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        attendanceData.innerHTML = html;
+    }
+
+    // Select all present
+    selectAllButton.addEventListener('click', function() {
+        const presentRadios = document.querySelectorAll('input[type="radio"][value="1"]');
+        presentRadios.forEach(radio => radio.checked = true);
+        showMessage('All students marked as present', 'success');
+    });
+
+    // Save changes
+    saveButton.addEventListener('click', function() {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('attendance_id', attendanceDateSelect.value);
+        
+        const studentInputs = document.querySelectorAll('input[name="student_id"]');
+        const studentData = [];
+        
+        studentInputs.forEach(input => {
+            const studentId = input.value;
+            const statusRadio = document.querySelector(`input[name="status_${studentId}"]:checked`);
+            if (statusRadio) {
+                studentData.push({
+                    id: studentId,
+                    status: statusRadio.value
+                });
+            }
+        });
+        
+        formData.append('student_ids', JSON.stringify(studentData));
+        
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Saving...';
+        
+        fetch('{% url "save_update_attendance" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(result => {
+            if (result === "OK") {
+                showMessage('Attendance updated successfully!', 'success');
+            } else {
+                showMessage('Error updating attendance', 'error');
+            }
+            saveButton.disabled = false;
+            saveButton.innerHTML = '<i class="fas fa-save mr-1"></i>Save Changes';
+        })
+        .catch(error => {
+            console.error('Error saving attendance:', error);
+            showMessage('Error updating attendance', 'error');
+            saveButton.disabled = false;
+            saveButton.innerHTML = '<i class="fas fa-save mr-1"></i>Save Changes';
+        });
+    });
+
+    // Show message function
+    function showMessage(message, type) {
+        const bgColor = type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        messageSection.innerHTML = `
+            <div class="${bgColor} border px-4 py-3 rounded-md">
+                <div class="flex">
+                    <i class="fas ${icon} mt-0.5 mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            </div>
+        `;
+        messageSection.style.display = 'block';
+        
+        setTimeout(() => {
+            messageSection.style.display = 'none';
+        }, 5000);
+    }
+});
+</script>
+{% endblock custom_js %}

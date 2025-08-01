@@ -39,16 +39,10 @@
       <span>Take Attendance</span>
     </a>
 
-    <a href="{% url 'staff_update_attendance' %}"
-       class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/staff/update-attendance/' %}bg-blue-600 text-white{% endif %}">
-      <i class="fas fa-edit w-5"></i>
-      <span>Update Attendance</span>
-    </a>
-
     <a href="{% url 'staff_view_attendance' %}"
-       class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/staff/view-attendance/' %}bg-blue-600 text-white{% endif %}">
-      <i class="fas fa-eye w-5"></i>
-      <span>View Attendance</span>
+       class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors {% if request.path == '/staff/view-attendance/' or request.path == '/staff/update-attendance/' %}bg-blue-600 text-white{% endif %}">
+      <i class="fas fa-clipboard-list w-5"></i>
+      <span>Manage Attendance</span>
     </a>
 
     <a href="{% url 'staff_export_attendance' %}"
