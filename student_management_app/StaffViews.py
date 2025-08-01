@@ -309,16 +309,29 @@ def get_students(request):
 
 @csrf_exempt
 def save_attendance_data(request):
+    try:
+        student_ids = request.POST.get("student_ids")
+        subject_id = request.POST.get("subject_id")
+        attendance_date = request.POST.get("attendance_date")
+        session_year_id = request.POST.get("session_year_id")
 
-    student_ids = request.POST.get("student_ids")
-    subject_id = request.POST.get("subject_id")
-    attendance_date = request.POST.get("attendance_date")
-    session_year_id = request.POST.get("session_year_id")
+        print(f"Save attendance data received:")
+        print(f"- student_ids: {student_ids}")
+        print(f"- subject_id: {subject_id}")
+        print(f"- attendance_date: {attendance_date}")
+        print(f"- session_year_id: {session_year_id}")
 
-    subject_model = Subjects.objects.get(id=subject_id)
-    session_year_model = SessionYearModel.objects.get(id=session_year_id)
+        if not all([student_ids, subject_id, attendance_date, session_year_id]):
+            return HttpResponse("Error: Missing required fields")
 
-    json_student = json.loads(student_ids)
+        subject_model = Subjects.objects.get(id=subject_id)
+        session_year_model = SessionYearModel.objects.get(id=session_year_id)
+
+        json_student = json.loads(student_ids)
+        print(f"Parsed student data: {json_student}")
+    except Exception as e:
+        print(f"Error in save_attendance_data setup: {str(e)}")
+        return HttpResponse(f"Error: {str(e)}")
 
     try:
         # Check if attendance already exists for this date and subject
