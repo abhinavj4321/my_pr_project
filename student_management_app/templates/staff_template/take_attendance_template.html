@@ -426,6 +426,13 @@ document.addEventListener("DOMContentLoaded", function(){
 
         formData.append('student_ids', JSON.stringify(studentData));
 
+        // Debug logging
+        console.log('Sending attendance data:');
+        console.log('- subject_id:', document.getElementById('manual_subject').value);
+        console.log('- session_year_id:', document.getElementById('manual_session_year').value);
+        console.log('- attendance_date:', document.getElementById('manual_attendance_date').value);
+        console.log('- student_ids:', JSON.stringify(studentData));
+
         saveAttendanceBtn.disabled = true;
         saveAttendanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
 
@@ -435,13 +442,15 @@ document.addEventListener("DOMContentLoaded", function(){
         })
         .then(response => response.text())
         .then(data => {
+            console.log('Save attendance response:', data);
             if (data === "OK") {
                 showMessage('Attendance saved successfully!', 'success');
                 // Reset form
                 studentsSection.style.display = 'none';
                 studentsList.innerHTML = '';
             } else {
-                showMessage('Error saving attendance', 'error');
+                showMessage(`Error saving attendance: ${data}`, 'error');
+                console.error('Save error:', data);
             }
             saveAttendanceBtn.disabled = false;
             saveAttendanceBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Attendance';
