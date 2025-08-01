@@ -111,6 +111,11 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Date and time formatting
+DATE_FORMAT = 'F d, Y'  # January 15, 2024
+DATETIME_FORMAT = 'F d, Y g:i A'  # January 15, 2024 3:30 PM
+SHORT_DATE_FORMAT = 'm/d/Y'  # 01/15/2024
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/

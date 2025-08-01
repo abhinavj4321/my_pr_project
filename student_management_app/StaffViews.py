@@ -394,7 +394,14 @@ def get_attendance_dates(request):
     list_data = []
 
     for attendance_single in attendance:
-        data_small={"id":attendance_single.id, "attendance_date":str(attendance_single.attendance_date), "session_year_id":attendance_single.session_year_id.id}
+        # Format date properly for display
+        formatted_date = attendance_single.attendance_date.strftime("%B %d, %Y")  # e.g., "January 15, 2024"
+        data_small={
+            "id": attendance_single.id,
+            "attendance_date": formatted_date,
+            "attendance_date_raw": attendance_single.attendance_date.strftime("%Y-%m-%d"),  # For calendar/sorting
+            "session_year_id": attendance_single.session_year_id.id
+        }
         list_data.append(data_small)
 
     return JsonResponse(json.dumps(list_data), content_type="application/json", safe=False)

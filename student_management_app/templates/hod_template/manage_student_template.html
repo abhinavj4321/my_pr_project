@@ -95,11 +95,17 @@
                                                  style="width: 60px; height: 60px; object-fit: cover; border-radius: 50%; border: 2px solid #e5e7eb;"
                                                  alt="Profile Picture" />
                                         </td>
-                                        <td>{{ student.session_year_id.session_start_year }}</td>
-                                        <td>{{ student.session_year_id.session_end_year }}</td>
+                                        <td>{{ student.session_year_id.session_start_year|date:"Y" }}</td>
+                                        <td>{{ student.session_year_id.session_end_year|date:"Y" }}</td>
                                         <td>{{ student.course_id.course_name }}</td>
-                                        <td>{{ student.admin.last_login }}</td>
-                                        <td>{{ student.admin.date_joined }}</td>
+                                        <td>
+                                            {% if student.admin.last_login %}
+                                                {{ student.admin.last_login|date:"M d, Y g:i A" }}
+                                            {% else %}
+                                                <span class="text-muted">Never</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ student.admin.date_joined|date:"M d, Y" }}</td>
                                         <td>
                                             <a href="{% url 'edit_student' student.admin.id %}" class="btn btn-info btn-sm">
                                                 <i class="fas fa-edit"></i> Edit

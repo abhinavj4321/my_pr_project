@@ -13,6 +13,14 @@ class SessionYearModel(models.Model):
     session_end_year = models.DateField()
     objects = models.Manager()
 
+    def __str__(self):
+        return f"{self.session_start_year.year} - {self.session_end_year.year}"
+
+    @property
+    def session_display(self):
+        """Return a formatted session year display"""
+        return f"Academic Year {self.session_start_year.year}-{self.session_end_year.year}"
+
 # ✅ Custom User Model
 class CustomUser(AbstractUser):
     USER_TYPE_CHOICES = ((1, "HOD"), (2, "Staff"), (3, "Student"))
@@ -76,6 +84,19 @@ class Attendance(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     objects = models.Manager()
+
+    def __str__(self):
+        return f"{self.subject_id.subject_name} - {self.attendance_date.strftime('%B %d, %Y')}"
+
+    @property
+    def formatted_date(self):
+        """Return a nicely formatted date"""
+        return self.attendance_date.strftime("%B %d, %Y")
+
+    @property
+    def short_date(self):
+        """Return a short formatted date"""
+        return self.attendance_date.strftime("%m/%d/%Y")
 
 # ✅ Attendance QR Code Model
 class AttendanceQRCode(models.Model):

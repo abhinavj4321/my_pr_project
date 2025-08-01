@@ -177,7 +177,7 @@ Attendance {% endblock page_title %} {% block main_content %} {% load static %}
                   for (key in json_data) {
                       attendanceDates.push({
                           title: 'Attendance',
-                          start: json_data[key]["attendance_date"],
+                          start: json_data[key]["attendance_date_raw"] || json_data[key]["attendance_date"], // Use raw date for calendar
                           id: json_data[key]["id"],
                           backgroundColor: '#28a745',
                           borderColor: '#28a745'
