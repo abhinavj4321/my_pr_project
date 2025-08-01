@@ -4,219 +4,173 @@
 Add Staff
 {% endblock page_title %}
 
+{% block breadcrumb %}
+Add Staff
+{% endblock breadcrumb %}
+
 {% block main_content %}
 
-<section class="content">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card card-primary">
-                    <div class="card-header">
-                        <h3 class="card-title">Add Staff</h3>
+<!-- Add Staff Form -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">Add New Staff Member</h3>
+        <p class="text-sm text-gray-600 mt-1">Fill in the staff information below</p>
+    </div>
+
+    <div class="p-6">
+        <form method="POST" action="{% url 'add_staff_save' %}" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    {% if message.tags == 'error' %}
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                        <div class="flex">
+                            <i class="fas fa-exclamation-circle mt-0.5 mr-2"></i>
+                            <span>{{ message }}</span>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <form method="POST" action="{% url 'add_staff_save' %}">
-                            {% csrf_token %}
-                            
-                            {% if messages %}
-                            <div class="form-group">
-                                {% for message in messages %}
-                                {% if message.tags == 'error' %}
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <strong>Error!</strong> {{ message }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                                {% elif message.tags == 'success' %}
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success!</strong> {{ message }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                                {% endif %}
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="email">Email</label>
-                                        <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
-                                        <div id="email_feedback" class="feedback"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="password">Password</label>
-                                        <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="first_name">First Name</label>
-                                        <input type="text" class="form-control" name="first_name" id="first_name" placeholder="First Name" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="last_name">Last Name</label>
-                                        <input type="text" class="form-control" name="last_name" id="last_name" placeholder="Last Name" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="username">Username</label>
-                                        <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
-                                        <div id="username_feedback" class="feedback"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="address">Address</label>
-                                        <textarea class="form-control" name="address" id="address" placeholder="Address"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary">Add Staff</button>
-                            </div>
-                        </form>
+                    {% elif message.tags == 'success' %}
+                    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-4">
+                        <div class="flex">
+                            <i class="fas fa-check-circle mt-0.5 mr-2"></i>
+                            <span>{{ message }}</span>
+                        </div>
                     </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            <!-- Personal Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <input type="email" name="email" id="email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter email address" required>
+                    <div id="email_feedback" class="text-sm mt-1"></div>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" name="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter password" required>
                 </div>
             </div>
-        </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                    <input type="text" name="first_name" id="first_name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter first name" required>
+                </div>
+
+                <div>
+                    <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                    <input type="text" name="last_name" id="last_name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter last name" required>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" name="username" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter username" required>
+                    <div id="username_feedback" class="text-sm mt-1"></div>
+                </div>
+
+                <div>
+                    <label for="profile_pic" class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+                    <input type="file" name="profile_pic" id="profile_pic" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-sm text-gray-500 mt-1">Upload a profile picture (optional)</p>
+                </div>
+            </div>
+
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <textarea name="address" id="address" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter address"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end pt-4 border-t border-gray-200">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Add Staff
+                </button>
+            </div>
+        </form>
     </div>
-</section>
+</div>
 
 {% endblock main_content %}
 
 {% block custom_js %}
 <script>
-$(document).ready(function(){
-    $("#email").keyup(function(){
-        var email = $(this).val();
-        if(email != ""){
-            $.ajax({
-                url: "{% url 'check_email_exist' %}",
-                type: "POST",
-                data: {
-                    email: email,
-                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
-                },
-                success: function(response){
-                    if(response.is_exists){
-                        $("#email_feedback").html("Email Already Exists").addClass("text-danger").removeClass("text-success");
-                    } else {
-                        $("#email_feedback").html("Email Available").addClass("text-success").removeClass("text-danger");
-                    }
-                }
-            });
-        } else {
-            $("#email_feedback").html("");
-        }
-    });
+    document.addEventListener("DOMContentLoaded", function(){
+        const emailInput = document.getElementById("email");
+        const usernameInput = document.getElementById("username");
+        const emailFeedback = document.getElementById("email_feedback");
+        const usernameFeedback = document.getElementById("username_feedback");
 
-    $("#username").keyup(function(){
-        var username = $(this).val();
-        if(username != ""){
-            $.ajax({
-                url: "{% url 'check_username_exist' %}",
-                type: "POST",
-                data: {
-                    username: username,
-                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
-                },
-                success: function(response){
-                    if(response.is_exists){
-                        $("#username_feedback").html("Username Already Exists").addClass("text-danger").removeClass("text-success");
-                    } else {
-                        $("#username_feedback").html("Username Available").addClass("text-success").removeClass("text-danger");
-                    }
+        if (emailInput) {
+            emailInput.addEventListener("keyup", function(){
+                const email = emailInput.value;
+                if(email !== ""){
+                    fetch('{% url 'check_email_exist' %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({email: email})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data === "True"){
+                            emailFeedback.className = "text-sm mt-1 text-red-600";
+                            emailFeedback.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Email not available';
+                            emailInput.className = "w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500";
+                        } else {
+                            emailFeedback.className = "text-sm mt-1 text-green-600";
+                            emailFeedback.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Email available';
+                            emailInput.className = "w-full px-3 py-2 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500";
+                        }
+                    })
+                    .catch(error => console.error("Failed", error));
+                } else {
+                    emailFeedback.textContent = "";
+                    emailInput.className = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
                 }
             });
-        } else {
-            $("#username_feedback").html("");
+        }
+
+        if (usernameInput) {
+            usernameInput.addEventListener("keyup", function(){
+                const username = usernameInput.value;
+                if(username !== ""){
+                    fetch('{% url 'check_username_exist' %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({username: username})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data === "True"){
+                            usernameFeedback.className = "text-sm mt-1 text-red-600";
+                            usernameFeedback.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Username not available';
+                            usernameInput.className = "w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500";
+                        } else {
+                            usernameFeedback.className = "text-sm mt-1 text-green-600";
+                            usernameFeedback.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Username available';
+                            usernameInput.className = "w-full px-3 py-2 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500";
+                        }
+                    })
+                    .catch(error => console.error("Failed", error));
+                } else {
+                    usernameFeedback.textContent = "";
+                    usernameInput.className = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+                }
+            });
         }
     });
-});
 </script>
-<style>
-.form-control {
-    border-radius: 0.25rem;
-    border: 1px solid #ced4da;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-control:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.feedback {
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-.text-danger {
-    color: #dc3545 !important;
-}
-
-.text-success {
-    color: #28a745 !important;
-}
-
-.form-group label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.btn-primary {
-    color: #fff;
-    background-color: #007bff;
-    border-color: #007bff;
-    padding: 0.375rem 0.75rem;
-    font-size: 1rem;
-    border-radius: 0.25rem;
-    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.btn-primary:hover {
-    color: #fff;
-    background-color: #0069d9;
-    border-color: #0062cc;
-}
-
-.alert {
-    position: relative;
-    padding: 0.75rem 1.25rem;
-    margin-bottom: 1rem;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
-}
-
-.alert-danger {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-}
-
-.alert-success {
-    color: #155724;
-    background-color: #d4edda;
-    border-color: #c3e6cb;
-}
-</style>
 {% endblock custom_js %}
