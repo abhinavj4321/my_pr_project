@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", function(){
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: `subject_id=${subjectId}&session_year_id=${sessionYearId}`
+            body: `subject=${subjectId}&session_year=${sessionYearId}`
         })
         .then(response => response.json())
         .then(data => {
@@ -409,8 +409,8 @@ document.addEventListener("DOMContentLoaded", function(){
             const statusRadio = document.querySelector(`input[name="status_${studentId}"]:checked`);
             if (statusRadio) {
                 studentData.push({
-                    student_id: studentId,
-                    status: statusRadio.value
+                    id: studentId,
+                    status: parseInt(statusRadio.value)
                 });
             }
         });
