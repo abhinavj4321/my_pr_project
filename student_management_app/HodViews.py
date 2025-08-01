@@ -366,8 +366,15 @@ def add_student(request):
 
     # Create the form (which will now have courses and session years to display)
     form = AddStudentForm()
+
+    # Get courses and session years for the template
+    courses = Courses.objects.all()
+    session_years = SessionYearModel.objects.all()
+
     context = {
-        "form": form
+        "form": form,
+        "courses": courses,
+        "session_years": session_years
     }
     return render(request, 'hod_template/add_student_template.html', context)
 
@@ -645,22 +652,32 @@ def delete_subject(request, subject_id):
 
 @csrf_exempt
 def check_email_exist(request):
-    email = request.POST.get("email")
-    user_obj = CustomUser.objects.filter(email=email).exists()
-    if user_obj:
-        return HttpResponse(True)
-    else:
-        return HttpResponse(False)
+    if request.method == "POST":
+        try:
+            import json
+            data = json.loads(request.body)
+            email = data.get("email")
+        except:
+            email = request.POST.get("email")
+
+        user_obj = CustomUser.objects.filter(email=email).exists()
+        return HttpResponse("True" if user_obj else "False")
+    return HttpResponse("False")
 
 
 @csrf_exempt
 def check_username_exist(request):
-    username = request.POST.get("username")
-    user_obj = CustomUser.objects.filter(username=username).exists()
-    if user_obj:
-        return HttpResponse(True)
-    else:
-        return HttpResponse(False)
+    if request.method == "POST":
+        try:
+            import json
+            data = json.loads(request.body)
+            username = data.get("username")
+        except:
+            username = request.POST.get("username")
+
+        user_obj = CustomUser.objects.filter(username=username).exists()
+        return HttpResponse("True" if user_obj else "False")
+    return HttpResponse("False")
 
 
 
