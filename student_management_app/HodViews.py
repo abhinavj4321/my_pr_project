@@ -6,10 +6,11 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
 from django.db.models import Q
+from django.db import IntegrityError, transaction
 import json
 from datetime import datetime, timedelta
 
-from student_management_app.models import CustomUser, Staffs, Courses, Subjects, Students, SessionYearModel, Attendance, AttendanceReport
+from student_management_app.models import CustomUser, Staffs, Courses, Subjects, Students, SessionYearModel, Attendance, AttendanceReport, StudentResult, AttendanceQRCode
 from .forms import AddStudentForm, EditStudentForm
 
 
@@ -178,13 +179,42 @@ def edit_staff_save(request):
 
 
 def delete_staff(request, staff_id):
-    staff = Staffs.objects.get(admin=staff_id)
     try:
-        staff.delete()
+        # Check if staff exists
+        staff = Staffs.objects.get(admin=staff_id)
+
+        # Check for related subjects
+        related_subjects = Subjects.objects.filter(staff_id=staff)
+        if related_subjects.exists():
+            subject_names = ", ".join([subject.subject_name for subject in related_subjects[:3]])
+            if related_subjects.count() > 3:
+                subject_names += f" and {related_subjects.count() - 3} more"
+            messages.error(request, f"Cannot delete staff. They are assigned to subjects: {subject_names}. Please reassign or delete these subjects first.")
+            return redirect('manage_staff')
+
+        # Use database transaction for PostgreSQL safety
+        with transaction.atomic():
+            # Get the CustomUser to delete
+            user = staff.admin
+
+            # Delete staff (this will also delete the CustomUser due to CASCADE)
+            staff.delete()
+
         messages.success(request, "Staff Deleted Successfully.")
         return redirect('manage_staff')
-    except:
-        messages.error(request, "Failed to Delete Staff.")
+
+    except Staffs.DoesNotExist:
+        messages.error(request, "Staff not found.")
+        return redirect('manage_staff')
+    except IntegrityError as e:
+        # PostgreSQL-specific constraint violation handling
+        if 'foreign key constraint' in str(e).lower():
+            messages.error(request, "Cannot delete staff due to database constraints. Please remove all related records first.")
+        else:
+            messages.error(request, f"Database constraint error: {str(e)}")
+        return redirect('manage_staff')
+    except Exception as e:
+        messages.error(request, f"Failed to Delete Staff: {str(e)}")
         return redirect('manage_staff')
 
 
@@ -259,13 +289,44 @@ def edit_course_save(request):
 
 
 def delete_course(request, course_id):
-    course = Courses.objects.get(id=course_id)
     try:
-        course.delete()
+        # Check if course exists
+        course = Courses.objects.get(id=course_id)
+
+        # Check for related students (DO_NOTHING constraint means they won't be deleted)
+        related_students = Students.objects.filter(course_id=course)
+        if related_students.exists():
+            messages.error(request, f"Cannot delete course. {related_students.count()} student(s) are enrolled in this course. Please move students to another course first.")
+            return redirect('manage_course')
+
+        # Check for related subjects (CASCADE constraint means they will be deleted)
+        related_subjects = Subjects.objects.filter(course_id=course)
+        if related_subjects.exists():
+            subject_names = ", ".join([subject.subject_name for subject in related_subjects[:3]])
+            if related_subjects.count() > 3:
+                subject_names += f" and {related_subjects.count() - 3} more"
+            messages.warning(request, f"Deleting this course will also delete {related_subjects.count()} subject(s): {subject_names}")
+
+        # Use database transaction for PostgreSQL safety
+        with transaction.atomic():
+            # Delete course (this will cascade delete related subjects)
+            course.delete()
+
         messages.success(request, "Course Deleted Successfully.")
         return redirect('manage_course')
-    except:
-        messages.error(request, "Failed to Delete Course.")
+
+    except Courses.DoesNotExist:
+        messages.error(request, "Course not found.")
+        return redirect('manage_course')
+    except IntegrityError as e:
+        # PostgreSQL-specific constraint violation handling
+        if 'foreign key constraint' in str(e).lower():
+            messages.error(request, "Cannot delete course due to database constraints. Please remove all related records first.")
+        else:
+            messages.error(request, f"Database constraint error: {str(e)}")
+        return redirect('manage_course')
+    except Exception as e:
+        messages.error(request, f"Failed to Delete Course: {str(e)}")
         return redirect('manage_course')
 
 
@@ -330,13 +391,32 @@ def edit_session_save(request):
 
 
 def delete_session(request, session_id):
-    session = SessionYearModel.objects.get(id=session_id)
     try:
+        # Check if session exists
+        session = SessionYearModel.objects.get(id=session_id)
+
+        # Check for related students (CASCADE constraint means they will be deleted)
+        related_students = Students.objects.filter(session_year_id=session)
+        if related_students.exists():
+            messages.error(request, f"Cannot delete session. {related_students.count()} student(s) are enrolled in this session. Please move students to another session first.")
+            return redirect('manage_session')
+
+        # Check for related attendance records (CASCADE constraint means they will be deleted)
+        related_attendance = Attendance.objects.filter(session_year_id=session)
+        if related_attendance.exists():
+            messages.warning(request, f"Deleting this session will also delete {related_attendance.count()} attendance record(s).")
+
+        # Delete session (this will cascade delete related records)
         session.delete()
+
         messages.success(request, "Session Deleted Successfully.")
         return redirect('manage_session')
-    except:
-        messages.error(request, "Failed to Delete Session.")
+
+    except SessionYearModel.DoesNotExist:
+        messages.error(request, "Session not found.")
+        return redirect('manage_session')
+    except Exception as e:
+        messages.error(request, f"Failed to Delete Session: {str(e)}")
         return redirect('manage_session')
 
 
@@ -534,13 +614,34 @@ def edit_student_save(request):
 
 
 def delete_student(request, student_id):
-    student = Students.objects.get(admin=student_id)
     try:
+        # Check if student exists
+        student = Students.objects.get(admin=student_id)
+
+        # Check for related attendance reports (CASCADE constraint means they will be deleted)
+        related_attendance = AttendanceReport.objects.filter(student_id=student)
+        if related_attendance.exists():
+            messages.warning(request, f"Deleting this student will also delete {related_attendance.count()} attendance record(s).")
+
+        # Check for related student results (CASCADE constraint means they will be deleted)
+        related_results = StudentResult.objects.filter(student_id=student)
+        if related_results.exists():
+            messages.warning(request, f"Deleting this student will also delete {related_results.count()} result record(s).")
+
+        # Get the CustomUser to delete
+        user = student.admin
+
+        # Delete student (this will also delete the CustomUser due to CASCADE)
         student.delete()
+
         messages.success(request, "Student Deleted Successfully.")
         return redirect('manage_student')
-    except:
-        messages.error(request, "Failed to Delete Student.")
+
+    except Students.DoesNotExist:
+        messages.error(request, "Student not found.")
+        return redirect('manage_student')
+    except Exception as e:
+        messages.error(request, f"Failed to Delete Student: {str(e)}")
         return redirect('manage_student')
 
 
@@ -640,13 +741,46 @@ def edit_subject_save(request):
 
 
 def delete_subject(request, subject_id):
-    subject = Subjects.objects.get(id=subject_id)
     try:
-        subject.delete()
+        # Check if subject exists
+        subject = Subjects.objects.get(id=subject_id)
+
+        # Check for related attendance records (DO_NOTHING constraint means they will remain)
+        related_attendance = Attendance.objects.filter(subject_id=subject)
+        if related_attendance.exists():
+            messages.error(request, f"Cannot delete subject. {related_attendance.count()} attendance record(s) are linked to this subject. Please delete attendance records first.")
+            return redirect('manage_subject')
+
+        # Check for related student results (CASCADE constraint means they will be deleted)
+        related_results = StudentResult.objects.filter(subject_id=subject)
+        if related_results.exists():
+            messages.warning(request, f"Deleting this subject will also delete {related_results.count()} student result record(s).")
+
+        # Check for related QR codes (CASCADE constraint means they will be deleted)
+        related_qr_codes = AttendanceQRCode.objects.filter(subject=subject)
+        if related_qr_codes.exists():
+            messages.warning(request, f"Deleting this subject will also delete {related_qr_codes.count()} QR code(s).")
+
+        # Use database transaction for PostgreSQL safety
+        with transaction.atomic():
+            # Delete subject (this will cascade delete related results and QR codes)
+            subject.delete()
+
         messages.success(request, "Subject Deleted Successfully.")
         return redirect('manage_subject')
-    except:
-        messages.error(request, "Failed to Delete Subject.")
+
+    except Subjects.DoesNotExist:
+        messages.error(request, "Subject not found.")
+        return redirect('manage_subject')
+    except IntegrityError as e:
+        # PostgreSQL-specific constraint violation handling
+        if 'foreign key constraint' in str(e).lower():
+            messages.error(request, "Cannot delete subject due to database constraints. Please remove all related records first.")
+        else:
+            messages.error(request, f"Database constraint error: {str(e)}")
+        return redirect('manage_subject')
+    except Exception as e:
+        messages.error(request, f"Failed to Delete Subject: {str(e)}")
         return redirect('manage_subject')
 
 
