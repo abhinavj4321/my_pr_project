@@ -595,8 +595,8 @@ def student_process_qr_scan(request):
                 attendance_report.save()
 
                 # Deactivate QR Code after successful attendance marking
-                qr_code.is_active = False
-                qr_code.save()
+                # qr_code.is_active = False
+                # qr_code.save()
 
                 return JsonResponse({
                     'status': 'success',
