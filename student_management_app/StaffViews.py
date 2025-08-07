@@ -449,90 +449,91 @@ def get_attendance_dates(request):
     return JsonResponse(list_data, safe=False)
 
 
-# @csrf_exempt
-# def get_attendance_student(request):
-#     try:
-#         attendance_id = request.POST.get('attendance_id')
-#         print(f"get_attendance_student called with attendance_id: {attendance_id}")
-
-#         if not attendance_id:
-#             print("No attendance_id provided")
-#             return JsonResponse([], safe=False)
-
-#         attendance = Attendance.objects.get(id=attendance_id)
-#         print(f"Found attendance record: {attendance}")
-#     except Attendance.DoesNotExist:
-#         print(f"Attendance with id {attendance_id} not found")
-#         return JsonResponse([], safe=False)
-#     except Exception as e:
-#         print(f"Error in get_attendance_student: {str(e)}")
-#         return JsonResponse([], safe=False)
-
-#     try:
-#         attendance_data = AttendanceReport.objects.filter(attendance_id=attendance)
-#         print(f"Found {attendance_data.count()} attendance records")
-
-#         list_data = []
-
-#         for student in attendance_data:
-#             try:
-#                 # Include location_verified field in the response
-#                 data_small={
-#                     "id": student.student_id.admin.id,
-#                     "name": student.student_id.admin.first_name+" "+student.student_id.admin.last_name,
-#                     "status": student.status,
-#                     "location_verified": student.location_verified
-#                 }
-#                 list_data.append(data_small)
-#             except Exception as e:
-#                 print(f"Error processing student {student.id}: {str(e)}")
-#                 continue
-
-#         print(f"Returning {len(list_data)} student records")
-#         return JsonResponse(list_data, safe=False)
-
-#     except Exception as e:
-#         print(f"Error getting attendance data: {str(e)}")
-#         return JsonResponse([], safe=False)
 @csrf_exempt
 def get_attendance_student(request):
-    attendance_date = request.POST.get('attendance_date')
-    attendance = Attendance.objects.get(id=attendance_date)
+    try:
+        attendance_id = request.POST.get('attendance_id')
+        print(f"get_attendance_student called with attendance_id: {attendance_id}")
 
-    # Get ALL students enrolled in this course for this session year
-    all_students = Students.objects.filter(
-        course_id=attendance.subject_id.course_id, 
-        session_year_id=attendance.session_year_id
-    )
-    
-    # Get existing attendance reports for this attendance
-    existing_attendance_reports = AttendanceReport.objects.filter(attendance_id=attendance)
-    existing_student_ids = existing_attendance_reports.values_list('student_id', flat=True)
-    
-    list_data = []
+        if not attendance_id:
+            print("No attendance_id provided")
+            return JsonResponse([], safe=False)
 
-    for student in all_students:
-        # Check if student has marked attendance
-        attendance_report = existing_attendance_reports.filter(student_id=student).first()
+        attendance = Attendance.objects.get(id=attendance_id)
+        print(f"Found attendance record: {attendance}")
+    except Attendance.DoesNotExist:
+        print(f"Attendance with id {attendance_id} not found")
+        return JsonResponse([], safe=False)
+    except Exception as e:
+        print(f"Error in get_attendance_student: {str(e)}")
+        return JsonResponse([], safe=False)
+
+    try:
+        attendance_data = AttendanceReport.objects.filter(attendance_id=attendance)
+        print(f"Found {attendance_data.count()} attendance records")
+
+        list_data = []
+
+        for student in attendance_data:
+            try:
+                # Include location_verified field in the response
+                data_small={
+                    "id": student.student_id.admin.id,
+                    "name": student.student_id.admin.first_name+" "+student.student_id.admin.last_name,
+                    "status": student.status,
+                    "location_verified": student.location_verified
+                }
+                list_data.append(data_small)
+            except Exception as e:
+                print(f"Error processing student {student.id}: {str(e)}")
+                continue
+
+        print(f"Returning {len(list_data)} student records")
+        return JsonResponse(list_data, safe=False)
+
+    except Exception as e:
+        print(f"Error getting attendance data: {str(e)}")
+        return JsonResponse([], safe=False)
         
-        if attendance_report:
-            # Student has marked attendance
-            status = attendance_report.status
-            location_verified = attendance_report.location_verified
-        else:
-            # Student hasn't marked attendance yet - mark as absent
-            status = False
-            location_verified = False
-        
-        data_small = {
-            "id": student.admin.id,
-            "name": student.admin.first_name + " " + student.admin.last_name,
-            "status": status,
-            "location_verified": location_verified
-        }
-        list_data.append(data_small)
+# @csrf_exempt
+# def get_attendance_student(request):
+#     attendance_date = request.POST.get('attendance_date')
+#     attendance = Attendance.objects.get(id=attendance_date)
 
-    return JsonResponse(json.dumps(list_data), content_type="application/json", safe=False)
+#     # Get ALL students enrolled in this course for this session year
+#     all_students = Students.objects.filter(
+#         course_id=attendance.subject_id.course_id, 
+#         session_year_id=attendance.session_year_id
+#     )
+    
+#     # Get existing attendance reports for this attendance
+#     existing_attendance_reports = AttendanceReport.objects.filter(attendance_id=attendance)
+#     existing_student_ids = existing_attendance_reports.values_list('student_id', flat=True)
+    
+#     list_data = []
+
+#     for student in all_students:
+#         # Check if student has marked attendance
+#         attendance_report = existing_attendance_reports.filter(student_id=student).first()
+        
+#         if attendance_report:
+#             # Student has marked attendance
+#             status = attendance_report.status
+#             location_verified = attendance_report.location_verified
+#         else:
+#             # Student hasn't marked attendance yet - mark as absent
+#             status = False
+#             location_verified = False
+        
+#         data_small = {
+#             "id": student.admin.id,
+#             "name": student.admin.first_name + " " + student.admin.last_name,
+#             "status": status,
+#             "location_verified": location_verified
+#         }
+#         list_data.append(data_small)
+
+#     return JsonResponse(json.dumps(list_data), content_type="application/json", safe=False)
 
 
 @csrf_exempt
