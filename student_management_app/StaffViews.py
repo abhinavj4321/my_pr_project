@@ -1085,7 +1085,7 @@ def staff_export_attendance_data(request):
         )
 
         # Prepare filename
-        filename = f"attendance_{subject.subject_name}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.xlsx"
+        filename = f"attendance_{start_date.strftime('%d-%m-%Y')}_{end_date.strftime('%d-%m-%Y')}.xlsx"
 
         # Read the file content instead of keeping it open
         with open(excel_file, 'rb') as f:
