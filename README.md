@@ -1,81 +1,135 @@
-﻿# Advanced Student Management System & QR Attendance
+# Prescripto - Doctor Appointment Booking System
 
-A comprehensive Django-based Student Management System featuring automated QR code attendance, geolocation verification, and dedicated portals for Admins, Staff, and Students.
+## Live Demos
+- **Frontend (User Portal):** [https://doctor-appointment-o08ak5twc-abhinav-jaiswals-projects-ad8a93c8.vercel.app/](https://doctor-appointment-o08ak5twc-abhinav-jaiswals-projects-ad8a93c8.vercel.app/)
+- **Admin Portal:** [https://doctor-appointment-zxdl-d11atk65z.vercel.app/](https://doctor-appointment-zxdl-d11atk65z.vercel.app/)
+- **Backend API:** [https://doctor-appointment-9328.onrender.com](https://doctor-appointment-9328.onrender.com)
 
-## 🚀 Key Features
+## Overview
+A comprehensive full-stack MERN application that allows patients to browse doctors by specialty and book appointments seamlessly. It also includes an Admin panel for system management and a Doctor panel for managing upcoming appointments.
 
-### User Roles & Portals
-- **Admin/HOD Portal:** Manage staff, students, courses, subjects, and sessions. View overall attendance and results.
-- **Staff Portal:** Add/Manage results, view student lists, and generate dynamic QR codes for secure attendance tracking.
-- **Student Portal:** View results, track personal attendance, and securely check in to classes via QR scanning.
+## Features
+- **User Portal:** 
+  - Browse doctors by specialty.
+  - Book, view, and cancel appointments.
+  - User authentication and profile management.
+  - Payment gateway integration (Stripe & Razorpay).
+- **Admin Portal:**
+  - Add and manage doctors, including photo uploads.
+  - View all system appointments and overall dashboard metrics.
+  - Secure admin authentication.
+- **Doctor Portal:**
+  - View booked appointments exclusively assigned to them.
+  - Mark appointments as completed or cancelled.
+  - Manage dashboard earnings and professional profile.
 
-### 📍 Advanced QR Attendance System
-- Dynamic QR code generation for each class session.
-- **Geolocation Verification:** Validates that the student is physically within an allowed radius (meters) of the teacher.
-- **Time-restricted Tokens:** QR codes expire automatically after a specified time frame.
-- **Fraud Prevention:** Checks location accuracy to prevent fake network/location spoofing.
+## Tech Stack
+- **Frontend & Admin:** React.js (Vite), Tailwind CSS, Context API
+- **Backend:** Node.js, Express.js
+- **Database:** MongoDB Atlas
+- **Media Storage:** Cloudinary
+- **Authentication:** JSON Web Tokens (JWT)
+- **Payments:** Stripe SDK, Razorpay API
 
-### 📚 Academic Management
-- Manage Academic Sessions (Start & End Years)
-- Course & Subject allocations
+## Project Structure
+This is a monorepo containing three micro-applications:
+- `/backend`: Node.js/Express framework handling APIs, database connections, and business logic.
+- `/frontend`: The main client-facing web application for users/patients.
+- `/admin`: The dashboard application for administrators and system doctors.
 
-## 🛠️ Technology Stack
+---
 
-- **Backend:** Python 3.13, Django 4.2
-- **Database:** PostgreSQL (Production via psycopg), SQLite (Local)
-- **Frontend:** Bootstrap 4, AdminLTE (templates), Chart.js for visualization
-- **Geodata & Vision:** Geopy (Location distance calculation), OpenCV/Pillow, `qrcode`
-- **Deployment:** Ready for Render (includes `render.yaml`, `Procfile`, Gunicorn, Whitenoise for static files)
+## Local Setup Instructions
 
-## ⚙️ Installation & Setup (Local Development)
+### 1. Prerequisites
+- **Node.js** installed on your machine
+- **MongoDB Atlas** account for DB URI
+- **Cloudinary** account for image assets
+- **Stripe / Razorpay** accounts (for checking out)
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd my_pr_project
-   ```
+### 2. Installation
+Clone the repository and install the NPM packages in all three directories:
 
-2. **Create a Virtual Environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
-   ```
+```bash
+# Install backend dependencies
+cd backend
+npm install
 
-3. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Install frontend dependencies
+cd ../frontend
+npm install
 
-4. **Run Migrations**
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
+# Install admin dependencies
+cd ../admin
+npm install
+```
 
-5. **Create Superuser (Admin)**
-   ```bash
-   python manage.py createsuperuser
-   ```
+### 3. Environment Variables
+Create a `.env` file inside each of the respective applications with the following placeholders:
 
-6. **Start the Development Server**
-   ```bash
-   python manage.py runserver
-   ```
-   *Access the app at `http://127.0.0.1:8000`*
+#### `backend/.env`
+```env
+PORT=4000
+MONGODB_URI=------ MongoDB URI here ------
+CLOUDINARY_NAME=------ Cloudinary Name here ------
+CLOUDINARY_API_KEY=------ Cloudinary API key here ------
+CLOUDINARY_SECRET_KEY=------ Cloudinary Secret key here ------
+JWT_SECRET=supersecretstring
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=securepassword
+CURRENCY=INR
+RAZORPAY_KEY_ID=------ Razorpay Key Id here ------
+RAZORPAY_KEY_SECRET=------ Razorpay Key Secret here ------
+STRIPE_SECRET_KEY=------ Stripe Secret Key here ------
+```
 
-## 🌍 Live Demo & Production Deployment (Render)
+#### `frontend/.env`
+```env
+VITE_BACKEND_URL=http://localhost:4000
+VITE_RAZORPAY_KEY_ID=------ Razorpay Key Id here ------
+```
 
-**Live Demo:** [https://my-pr-project.onrender.com](https://my-pr-project.onrender.com)
+#### `admin/.env`
+```env
+VITE_BACKEND_URL=http://localhost:4000
+VITE_CURRENCY=₹
+```
 
-This project is pre-configured for deployment on Render.
-- Uses `dj-database-url` for the database connection.
-- Built-in `build.sh` script to automate dependencies installing, collecting static files, and running migrations during the build phase.
-- `render.yaml` for infrastructure as code.
+### 4. Running the Application
+You will need to run all three servers simultaneously. Open three separate terminal windows:
 
-## 📜 Project Structure Highlights
-- `/student_management_app/`: Main Django app housing Views (HOD, Staff, Student), Models, and API logic.
-- `/student_management_system/`: Core Django configurations & settings.
-- `/static/`: CSS, JS, Fonts, and Vendor libraries (AdminLTE context).
+**Terminal 1 (Backend):**
+```bash
+cd backend
+npm run server
+```
 
+**Terminal 2 (Frontend):**
+```bash
+cd frontend
+npm run dev
+```
 
+**Terminal 3 (Admin):**
+```bash
+cd admin
+npm run dev
+```
 
+---
+
+## Cloud Deployment Guide
+
+This project is optimized for deployment via **Render** and **Vercel**.
+
+1. **Backend (Render):**
+   - Create a New Web Service.
+   - Set **Root Directory** to `backend`.
+   - Set Build Command to `npm install` and Start Command to `npm start`.
+   - Add all backend environment variables.
+2. **Frontend (Vercel):**
+   - Import the repository and set **Root Directory** to `frontend`.
+   - Add `VITE_BACKEND_URL` pointing to the Render backend URL.
+3. **Admin Panel (Vercel):**
+   - Import the repository again and set **Root Directory** to `admin`.
+   - Add `VITE_BACKEND_URL` and `VITE_CURRENCY` variables.
